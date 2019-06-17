@@ -123,7 +123,28 @@ impl<'a> AsCharCaseSensitive for &'a char {
     }
 }
 
-/// Parser which accepts lone or more lowercase letters
+/// Parser which takes one or more lowercase letters
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// 
+/// use levelspecter::{loweralpha1, AsCharCaseSensitive};
+/// let parser: IResult<&str, &str> = loweralpha1("thisisgood");
+/// ```
 pub fn loweralpha1<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -132,7 +153,28 @@ where
   input.split_at_position1_complete(|item| !item.is_alpha_lower(), ErrorKind::Alpha)
 }
 
-/// Parser which accepts one or more lowercase letters or numbers
+/// Parser which takes one or more lowercase letters or numbers
+///
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// 
+/// use levelspecter::{loweralphanum1, AsCharCaseSensitive};
+/// let parser: IResult<&str, &str> = loweralphanum1("1thisis32good");
+/// ```
 pub fn loweralphanum1<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -141,7 +183,29 @@ where
   input.split_at_position1_complete(|item| !item.is_alphanum_lower() , ErrorKind::AlphaNumeric)
 }
 
-/// Parser which accepts zero or more lowercase letters
+/// Parser which takes zero or more lowercase letters
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// 
+/// use levelspecter::{loweralpha0, AsCharCaseSensitive};
+/// let parser: IResult<&str, &str> = loweralpha0("thisisgood");
+/// let parser: IResult<&str, &str> = loweralpha0("");
+/// ```
 pub fn loweralpha0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -150,7 +214,30 @@ where
   input.split_at_position_complete(|item| !item.is_alpha_lower())
 }
 
-/// Parser which accepts zero or more lowercase letters or numbers
+/// Parser which takes zero or more lowercase letters or numbers
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{loweralphanum0, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = loweralphanum0("1thisis1good");
+/// let parser: IResult<&str, &str> = loweralphanum0("");
+/// ```
 pub fn loweralphanum0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -159,7 +246,27 @@ where
   input.split_at_position_complete(|item| !item.is_alphanum_lower())
 }
 
-/// Parser which accepts one or more uppercase letters
+/// Parser which takes one or more uppercase letters
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{upperalpha1, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = upperalpha1("THISISIT");
+/// ```
 pub fn upperalpha1<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -168,7 +275,29 @@ where
   input.split_at_position1_complete(|item| !item.is_alpha_upper(), ErrorKind::Alpha)
 }
 
-/// Parser which accepts one or more uppercase letters or numbers
+/// Parser which takes one or more uppercase letters or numbers
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{upperalphanum1, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = upperalphanum1("1THISISIT");
+/// ```
 pub fn upperalphanum1<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -177,7 +306,7 @@ where
   input.split_at_position1_complete(|item| !item.is_alphanum_upper(), ErrorKind::AlphaNumeric)
 }
 
-/// Parser which accepts zero or more uppercase letters 
+/// Parser which takes zero or more uppercase letters 
 pub fn upperalpha0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -186,7 +315,30 @@ where
   input.split_at_position_complete(|item| !item.is_alpha_upper())
 }
 
-/// Parser which accepts zero or more uppercase letters or numbers
+/// Parser which takes zero or more uppercase letters or numbers
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{upperalphanum0, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = upperalphanum0("1THISISIT");
+/// let parser: IResult<&str, &str> = upperalphanum0("");
+/// ```
 pub fn upperalphanum0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -195,17 +347,83 @@ where
   input.split_at_position_complete(|item| !item.is_alphanum_upper())
 }
 
-/// a letter followed by zero or more letters and numbers
+/// Parser which takes a letter followed by zero or more letters and numbers
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{alpha_alphanum, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = alpha_alphanum("a2F3gab4");
+/// ```
 pub fn alpha_alphanum(input: &str) -> IResult<&str, &str> {
     recognize(tuple((alpha1, alphanumeric0)))(input)
 }
 
-/// an uppercase letter followed by zero or more uppercase letters and numbers
+/// Parser which takes an uppercase letter followed by zero or more uppercase letters and numbers
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{alpha_alphanum_upper, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = alpha_alphanum_upper("A1THS1IS2IT");
+/// ```
 pub fn alpha_alphanum_upper(input: &str) -> IResult<&str, &str> {
     recognize(tuple((upperalpha1, upperalphanum0)))(input)
 }
 
-/// a lowercase letter followed by zero or more lowercase letters and numbers
+/// Parser which takes a lowercase letter followed by zero or more lowercase letters and numbers
+/// 
+/// # Parameters
+/// 
+/// * `input` - The input data (generally &[u8] or &str) to parse
+/// 
+/// # Returns
+///   A tuple of (remaining, processed) T, if successful. Otherwise,
+/// a nom Error. 
+/// 
+/// # Examples
+/// 
+/// ```
+/// use nom::{
+///     error::ParseError,
+///     InputTakeAtPosition,
+///     AsChar,
+///     IResult,
+/// };
+/// use levelspecter::{alpha_alphanum_lower, AsCharCaseSensitive};
+/// 
+/// let parser: IResult<&str, &str> = alpha_alphanum_lower("a1budy23times47");
+/// ```
 pub fn alpha_alphanum_lower(input: &str) -> IResult<&str, &str> {
     recognize(tuple((loweralpha1, loweralphanum0)))(input)
 }
