@@ -77,7 +77,6 @@ impl<'a> AsCharCaseSensitive for &'a u8 {
     }
 }
 
-
 impl AsCharCaseSensitive for char {
     
     #[inline]
@@ -150,7 +149,7 @@ where
 {
   input.split_at_position_complete(|item| !item.is_alpha_lower())
 }
-//-
+
 /// Parser which accepts zero or more lowercase letters or numbers
 pub fn loweralphanum0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
@@ -175,7 +174,7 @@ where
     T: InputTakeAtPosition,
     <T as InputTakeAtPosition>::Item: AsCharCaseSensitive,
 {
-  input.split_at_position1_complete(|item| !item.is_alphanum_upper(), ErrorKind::Alpha)
+  input.split_at_position1_complete(|item| !item.is_alphanum_upper(), ErrorKind::AlphaNumeric)
 }
 
 /// Parser which accepts zero or more uppercase letters 
@@ -186,7 +185,7 @@ where
 {
   input.split_at_position_complete(|item| !item.is_alpha_upper())
 }
-
+//-
 /// Parser which accepts zero or more uppercase letters or numbers
 pub fn upperalphanum0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
@@ -328,4 +327,61 @@ mod tests {
         let la: IResult<&str, &str> = loweralphanum0("");
         assert_eq!(la, Ok(("",""))) ;
     }
+
+    //-----------------------//
+    //     UPPER ALPHA 1     //
+    //-----------------------//
+
+    #[test]
+    fn upperalpha1_succeeds_with_expected_input() {
+        let la: IResult<&str, &str> = upperalpha1("THISISATEST");
+        assert_eq!(la, Ok(("","THISISATEST")));
+    }
+
+    #[test]
+    fn upperalpha1_fails_with_numeric_input() {
+        let la: IResult<&str, &str> = upperalpha1("1THISISATEST");
+        assert_eq!(la, Err(Err::Error(("1THISISATEST", Alpha))));
+    }
+
+    #[test]
+    fn upperalpha1_fails_with_lowercase_input() {
+        let la: IResult<&str, &str> = upperalpha1("tHISISATEST");
+        assert_eq!(la, Err(Err::Error(("tHISISATEST", Alpha))));
+    }
+
+    #[test]
+    fn upperalpha1_fails_with_no_input() {
+        let la: IResult<&str, &str> = upperalpha1("");
+        assert_eq!(la, Err(Err::Error(("", Alpha))));
+    }
+
+    //-----------------------//
+    //   UPPER ALPHA NUM 1   //
+    //-----------------------//
+
+    #[test]
+    fn upperalphanum1_succeeds_with_uppercase_alpha_input() {
+        let la: IResult<&str, &str> = upperalphanum1("THISISATEST");
+        assert_eq!(la, Ok(("","THISISATEST")));
+    }
+
+    #[test]
+    fn upperalphanum1_succeeds_with_numeric_input() {
+        let la: IResult<&str, &str> = upperalphanum1("1THISISATEST");
+        assert_eq!(la, Ok(("","1THISISATEST")));
+    }
+
+    #[test]
+    fn upperalphanum1_fails_with_lowercase_input() {
+        let la: IResult<&str, &str> = upperalphanum1("tHISISATEST");
+        assert_eq!(la, Err(Err::Error(("tHISISATEST", AlphaNumeric))));
+    }
+
+    #[test]
+    fn upperalphanum1_fails_with_no_input() {
+        let la: IResult<&str, &str> = upperalphanum1("");
+        assert_eq!(la, Err(Err::Error(("", AlphaNumeric))));
+    }
+
 }
