@@ -80,8 +80,8 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
 #[inline]
 fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
     alt((
-    preceded(tag("."), alpha_alphanum_upper ),
-    preceded(tag("."), tag("%"))
+        preceded(tag("."), alpha_alphanum_upper ),
+        preceded(tag("."), tag("%"))
     ))
     (input)
 }
@@ -92,12 +92,12 @@ fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
 fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         alt((
-            tuple(( parse_show, parse_seq, parse_shot)),
+            tuple((parse_show, parse_seq, parse_shot)),
             tuple((parse_show, parse_assetdev_seq, parse_assetdev_shot))
         )),
-        Vec::new(), 
+        Vec::with_capacity(3), 
         |mut acc: Vec<_>, item| {
-            let (show,seq,shot) = item;
+            let (show, seq, shot) = item;
             acc.push(show); 
             acc.push(seq); 
             acc.push(shot);
@@ -113,9 +113,9 @@ fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
 fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         tuple((parse_show, parse_seq)),
-        Vec::new(), 
+        Vec::with_capacity(2), 
         |mut acc: Vec<_>, item| {
-            let (show,seq) = item ;
+            let (show, seq) = item ;
             acc.push(show); 
             acc.push(seq);
             acc
@@ -129,7 +129,7 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
 fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to place into a vector
         parse_show, 
-        Vec::new(), 
+        Vec::with_capacity(1), 
         |mut acc: Vec<_>, item| { 
             acc.push(item); 
             acc
