@@ -6,8 +6,8 @@ use nom::{
     sequence::{tuple, preceded },
     multi::{ fold_many1},
 };
-
-use aschar_casesensitive::{ upperalphanum1, alpha_alphanum, alpha_alphanum_upper};
+use crate::LevelSpecterError;
+use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper};
 
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
@@ -70,7 +70,7 @@ fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
     )(input)
 }
 
-fn levelparser(input: &str) -> IResult<&str, String> {
+fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
     let (leftover, result) = all_consuming(
         alt((
             shot_alt,
@@ -79,12 +79,15 @@ fn levelparser(input: &str) -> IResult<&str, String> {
         )))
      (input)?;
 
-    Ok((leftover, result.join(".")))
+    Ok((leftover, result))
 }
 
-pub fn levelspec_parser(input: &str) -> Result<String, String> {
+/// Parse a levelspec from a string
+pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
     match levelparser(input) {
-        Err(_) => Err(format!("Unable to parse levelspec for {}", input)),
+        Err(_) => Err( LevelSpecterError::ParseError(format!("Unable to parse levelspec for {}", input))),
+        //Ok((_,ls)) => Ok(ls.iter().map(|x| x.to_string()).collect::<Vec<_>>() ),
         Ok((_,ls)) => Ok(ls),
+
     }
 }
