@@ -17,8 +17,7 @@ fn alpha_alphanum(input: &str) -> IResult<&str, &str> {
 fn levelparser(input: &str) -> IResult<&str, String> {
     let result = all_consuming(
         tuple(( // inner tuple start
-            alpha_alphanum,
-            //upperalphanum1, 
+            alpha_alphanum, // show has to start with a letter
             many_m_n(
                 0, 
                 1, 
