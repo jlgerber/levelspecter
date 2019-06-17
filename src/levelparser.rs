@@ -11,6 +11,35 @@ use nom::{
 use crate::LevelSpecterError;
 use aschar_casesensitive::{ /*upperalphanum1,*/ alpha_alphanum_upper};
 
+
+/// Parse a levelspec from a string
+/// 
+/// # Parameters
+/// 
+/// * `input` - str we wish to convert to a levelspec
+/// 
+/// # Returns
+/// 
+/// A `Vec` of `&str` capturing the show, sequence, shot, if successful. Otherwise,
+/// a LevelSpecterError
+/// 
+/// # Example
+/// 
+/// ```
+/// use levelspecter::{levelspec_parser, LevelSpecterError};
+/// 
+/// let results = levelspec_parser("DEV01.RD.0001");
+/// assert_eq!(results, Ok(vec!["DEV01", "RD", "0001"]));
+/// ```
+pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
+    match levelparser(input) {
+        Err(_) => Err( LevelSpecterError::ParseError(format!("Unable to parse levelspec for {}", input))),
+        //Ok((_,ls)) => Ok(ls.iter().map(|x| x.to_string()).collect::<Vec<_>>() ),
+        Ok((_,ls)) => Ok(ls),
+
+    }
+}
+
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
     alt((
@@ -74,7 +103,8 @@ fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
             acc.push(shot);
             acc
         }
-    )(input)
+    )
+    (input)
 }
 
 // the sequence alternative has a show and a sequence
@@ -90,7 +120,8 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
             acc.push(seq);
             acc
         } 
-    )(input)
+    )
+    (input)
 }
 
 
@@ -103,7 +134,8 @@ fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
             acc.push(item); 
             acc
         } 
-    )(input)
+    )
+    (input)
 }
 
 fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
@@ -118,15 +150,6 @@ fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
     Ok((leftover, result))
 }
 
-/// Parse a levelspec from a string
-pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
-    match levelparser(input) {
-        Err(_) => Err( LevelSpecterError::ParseError(format!("Unable to parse levelspec for {}", input))),
-        //Ok((_,ls)) => Ok(ls.iter().map(|x| x.to_string()).collect::<Vec<_>>() ),
-        Ok((_,ls)) => Ok(ls),
-
-    }
-}
 
 #[cfg(test)]
 mod levelspec {
