@@ -4,10 +4,9 @@ use nom::{
     InputTakeAtPosition,
     AsChar,
     IResult,
-    character::complete::{anychar, alpha1},
-    combinator::{all_consuming, complete},
+    combinator::{ recognize},
     error::ErrorKind,
-    Err,
+    sequence::tuple,
 };
 
 pub trait AsCharCaseSensitive : AsChar {
@@ -181,4 +180,9 @@ where
   <T as InputTakeAtPosition>::Item: AsCharCaseSensitive,
 {
   input.split_at_position_complete(|item| !item.is_alphanum_upper())
+}
+
+/// an uppercase letter followed by zero or more uppercase letters and numbers
+pub fn alpha_alphanum(input: &str) -> IResult<&str, &str> {
+    recognize(tuple((upperalpha1, upperalphanum0)))(input)
 }
