@@ -1,6 +1,6 @@
 use failure::Fail;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Fail, PartialEq, Eq)]
 pub enum LevelSpecterError {
     #[fail(display = "Placeholder error")]
     Placeholder,

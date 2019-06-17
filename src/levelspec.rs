@@ -92,3 +92,44 @@ impl fmt::Display for LevelSpec {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_parse_show() {
+        let result = LevelSpec::from_str("DEV01");
+        let expect = Ok(LevelSpec {show: LevelType::from("DEV01"), sequence: None, shot: None });
+        assert_eq!(result, expect);
+    }
+
+ #[test]
+    fn can_parse_seq() {
+        let result = LevelSpec::from_str("DEV01.RD");
+        let expect = Ok(LevelSpec {show: LevelType::from("DEV01"), sequence: Some(LevelType::from("RD")), shot: None });
+        assert_eq!(result, expect);
+    }
+
+ #[test]
+    fn can_parse_shot() {
+        let result = LevelSpec::from_str("DEV01.RD.0001");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from("DEV01"), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: Some(LevelType::from("0001")) });
+        assert_eq!(result, expect);
+    }
+
+
+//  #[test]
+//     fn can_parse_shot_with_wildcard() {
+//         let result = LevelSpec::from_str("DEV01.RD.%");
+//         let expect = Ok(LevelSpec {
+//             show: LevelType::from("DEV01"), 
+//             sequence: Some(LevelType::from("RD")), 
+//             shot: Some(LevelType::from("%")) });
+//         assert_eq!(result, expect);
+//     }
+}
