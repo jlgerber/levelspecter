@@ -1,60 +1,83 @@
 use nom::{
     IResult,
     branch::alt,
-    combinator::{all_consuming, recognize},
+    combinator::{all_consuming},
     bytes::complete::{tag},
     sequence::{tuple, preceded },
-    multi::{many_m_n, many0},
+    multi::{ fold_many1},
 };
 
 use aschar_casesensitive::{ upperalphanum1, alpha_alphanum, alpha_alphanum_upper};
 
 
-// fn alpha_alphanum(input: &str) -> IResult<&str, &str> {
-//     recognize(tuple((upperalpha1, upperalphanum0)))(input)
-// }
+#[inline]
+fn parse_show(input: &str) -> IResult<&str, &str> {
+    alpha_alphanum_upper(input)
+}
 
 #[inline]
-fn recognize_seq(input: &str) -> IResult<&str, &str> {
-    recognize(tuple((tag("."), alpha_alphanum_upper)))(input)
+fn parse_seq(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), alpha_alphanum_upper)(input)
+}
+
+#[inline]
+fn parse_shot(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), upperalphanum1 )(input)
+}
+
+#[inline]
+fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1(
+        tuple(( parse_show, parse_seq, parse_shot)),
+        Vec::new(), 
+        |mut acc: Vec<_>, item| {
+            let (show,seq,shot) = item;
+            acc.push(show); 
+            acc.push(seq); 
+            acc.push(shot);
+            acc
+        }
+    )(input)
 }
 
 
 #[inline]
-fn recognize_shot(input: &str) -> IResult<&str, &str> {
-    recognize(tuple((tag("."), upperalphanum1 )))(input)
+fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1( 
+        tuple((parse_show, parse_seq)),
+        Vec::new(), 
+        |mut acc: Vec<_>, item| {
+            let (show,seq) = item ;
+            acc.push(show); 
+            acc.push(seq);
+            acc
+        } 
+    )(input)
+}
+
+
+#[inline]
+fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1(
+        parse_show, 
+        Vec::new(), 
+        |mut acc: Vec<_>, item| { 
+            acc.push(item); 
+            acc
+        } 
+    )(input)
 }
 
 fn levelparser(input: &str) -> IResult<&str, String> {
-    let result = all_consuming(
-        tuple(( // inner tuple start
-            alpha_alphanum, // show has to start with a letter
-            many0( 
-                alt((
-                    recognize( 
-                        tuple((
-                            recognize_seq, 
-                            recognize_shot
-                        ))
-                    ),
-                    recognize_seq
-                ))
-            ) // many0 end  
-        )) // tuple end
-    )(input)?;
-    
-    let (_,(show, mut seqshot)) = result; 
-    println!("seqshot {:?}", seqshot);
-    let seqshot = match seqshot.len() {
-        2 => seqshot.join("."),
-        1 =>  {
-            let seqshot = seqshot.pop().unwrap();
-            if seqshot.starts_with(".") {seqshot.to_string()} else {format!(".{}", seqshot)}
-        },
-        0 => "".to_owned(),
-        _ => panic!("unexpected number")
-    };
-    Ok(("", format!("{}{}", show,seqshot)))
+    let (leftover, result) = all_consuming(
+        alt((
+            shot_alt,
+            seq_alt,
+            show_alt,
+        )))
+     (input)?;
+
+    Ok((leftover, result.join(".")))
 }
 
 pub fn levelspec_parser(input: &str) -> Result<String, String> {
