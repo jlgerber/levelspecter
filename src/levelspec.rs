@@ -7,6 +7,15 @@ pub enum LevelType {
     Dir(String),
     Wildcard,
 }
+impl LevelType {
+    pub fn is_wildcard(&self) -> bool {
+        if self == &LevelType::Wildcard {
+            true
+        } else {
+            false
+        }
+    }
+}
 
 impl From<&str> for LevelType {
     fn from(input: &str) -> Self {
@@ -60,6 +69,26 @@ impl LevelSpec {
             shot: Some(LevelType::from(shot))
         }
     }
+
+   pub fn is_concrete(&self) -> bool {
+        if self.show.is_wildcard() {
+           return false;
+        }
+        
+        if let Some(ref ls) = self.sequence {
+            if ls.is_wildcard() {
+                return false
+            }
+        }
+        
+        if let Some(ref ls) = self.shot {
+            if ls.is_wildcard() {
+                return false
+            }
+        }
+
+        true
+   }
 }
 
 impl FromStr for LevelSpec {
@@ -131,5 +160,29 @@ mod tests {
             sequence: Some(LevelType::from("RD")), 
             shot: Some(LevelType::from("%")) });
         assert_eq!(result, expect);
+    }
+
+    #[test]
+    fn is_concrete_works() {
+        let level = LevelSpec::from_str("DEV01.RD.0001").unwrap();
+        assert!(level.is_concrete());
+    }
+
+    #[test]
+    fn is_concrete_for_show_wildcard_works() {
+        let level = LevelSpec::from_str("%.RD.0001").unwrap();
+        assert!(!level.is_concrete());
+    }
+
+    #[test]
+    fn is_concrete_for_seq_wildcard_works() {
+        let level = LevelSpec::from_str("DEV01.%.0001").unwrap();
+        assert!(!level.is_concrete());
+    }
+
+    #[test]
+    fn is_concrete_for_shot_wildcard_works() {
+        let level = LevelSpec::from_str("DEV01.RD.%").unwrap();
+        assert!(!level.is_concrete());
     }
 }
