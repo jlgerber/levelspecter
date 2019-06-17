@@ -1,10 +1,10 @@
-use levelspecter::levelspecparser;
+use levelspecter::levelspec_parser;
 
 
 fn main() {
-    println!("levelspecparser(\"DEV01.RD.9999.343\") {:?}",levelspecparser("DEV01.RD.9999.343"));
-    println!("levelspecparser(\"DEV01.RD.9999\") {:?}",levelspecparser("DEV01.RD.9999"));
-    println!("levelspecparser(\"DEV01.RD\") {:?}",levelspecparser("DEV01.RD"));
-    println!("levelspecparser(\"DEV01\") {:?}",levelspecparser("DEV01"));
+    println!("levelspec_parser(\"DEV01.RD.9999.343\") {:?}",levelspec_parser("DEV01.RD.9999.343"));
+    println!("levelspec_parser(\"DEV01.RD.9999\") {:?}",levelspec_parser("DEV01.RD.9999"));
+    println!("levelspec_parser(\"DEV01.RD\") {:?}",levelspec_parser("DEV01.RD"));
+    println!("levelspec_parser(\"DEV01\") {:?}",levelspec_parser("DEV01"));
 
 }

@@ -7,12 +7,12 @@ use nom::{
     multi::many_m_n,
 };
 
-use crate::{upperalphanum0, upperalpha1, upperalphanum1};
+use aschar_casesensitive::{ upperalphanum1, alpha_alphanum};
 
 
-fn alpha_alphanum(input: &str) -> IResult<&str, &str> {
-    recognize(tuple((upperalpha1, upperalphanum0)))(input)
-}
+// fn alpha_alphanum(input: &str) -> IResult<&str, &str> {
+//     recognize(tuple((upperalpha1, upperalphanum0)))(input)
+// }
 
 fn levelparser(input: &str) -> IResult<&str, String> {
     let result = all_consuming(
@@ -57,7 +57,7 @@ fn levelparser(input: &str) -> IResult<&str, String> {
     Ok(("", format!("{}{}", show,seqshot)))
 }
 
-pub fn levelspecparser(input: &str) -> Result<String, String> {
+pub fn levelspec_parser(input: &str) -> Result<String, String> {
     match levelparser(input) {
         Err(_) => Err(format!("Unable to parse levelspec for {}", input)),
         Ok((_,ls)) => Ok(ls),
