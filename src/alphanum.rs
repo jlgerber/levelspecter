@@ -185,7 +185,7 @@ where
 {
   input.split_at_position_complete(|item| !item.is_alpha_upper())
 }
-//-
+
 /// Parser which accepts zero or more uppercase letters or numbers
 pub fn upperalphanum0<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
@@ -209,6 +209,8 @@ pub fn alpha_alphanum_upper(input: &str) -> IResult<&str, &str> {
 pub fn alpha_alphanum_lower(input: &str) -> IResult<&str, &str> {
     recognize(tuple((loweralpha1, loweralphanum0)))(input)
 }
+
+
 
 #[cfg(test)]
 mod tests {
@@ -384,4 +386,128 @@ mod tests {
         assert_eq!(la, Err(Err::Error(("", AlphaNumeric))));
     }
 
+    //-----------------------//
+    //     UPPER ALPHA 0     //
+    //-----------------------//    
+
+    #[test]
+    fn upperalpha0_succeeds_with_expected_input() {
+        let la: IResult<&str, &str> = upperalpha0("THISISATEST");
+        assert_eq!(la, Ok(("","THISISATEST")));
+    }
+
+    #[test]
+    fn upperalpha0_doenst_make_progress_with_numeric_input() {
+        let la: IResult<&str, &str> = upperalpha0("1THISISATEST");
+        assert_eq!(la, Ok(("1THISISATEST", "")));
+    }
+
+    #[test]
+    fn upperalpha0_doesnt_make_progress_with_lowercase_input() {
+        let la: IResult<&str, &str> = upperalpha0("tHISISATEST");
+        assert_eq!(la, Ok(("tHISISATEST", "")));
+    }
+
+    #[test]
+    fn upperalpha0_succeeds_with_no_input() {
+        let la: IResult<&str, &str> = upperalpha0("");
+        assert_eq!(la, Ok(("",""))) ;
+    }
+
+    //-----------------------//
+    //   UPPER ALPHA NUM 0   //
+    //-----------------------// 
+
+    #[test]
+    fn upperalphanum0_succeeds_with_expected_input() {
+        let la: IResult<&str, &str> = upperalphanum0("THISISATEST");
+        assert_eq!(la, Ok(("","THISISATEST")));
+    }
+
+    #[test]
+    fn upperalphanum0_makes_progress_with_numeric_input() {
+        let la: IResult<&str, &str> = upperalphanum0("1THISISATEST");
+        assert_eq!(la, Ok(("", "1THISISATEST")));
+    }
+
+    #[test]
+    fn upperalphanum0_doesnt_make_progress_with_lowercase_input() {
+        let la: IResult<&str, &str> = upperalphanum0("1tHISISATEST");
+        assert_eq!(la, Ok(("tHISISATEST", "1")));
+    }
+
+    #[test]
+    fn upperalphanum0_succeeds_with_no_input() {
+        let la: IResult<&str, &str> = upperalphanum0("");
+        assert_eq!(la, Ok(("",""))) ;
+    }
+
+    //-----------------------//
+    //    ALPHA ALPHANUM     //
+    //-----------------------// 
+
+    #[test]
+    fn alpha_alphanum_succeeds_with_letter_followed_by_number_and_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum("f1bar");
+        assert_eq!(la, Ok(("","f1bar"))) ;
+    }
+
+    #[test]
+    fn alpha_alphanum_succeeds_with_uppercase_letter_followed_by_number_and_uppercase_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum("F1BAR");
+        assert_eq!(la, Ok(("","F1BAR"))) ;
+    }
+
+    #[test]
+    fn alpha_alphanum_fails_with_number_followed_by_numbers_and_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum("1f1Bar");
+        assert_eq!(la, Err(Err::Error(("1f1Bar", Alpha)))) ;
+    }
+
+    //-----------------------//
+    // ALPHA ALPHANUM UPPER  //
+    //-----------------------// 
+
+    #[test]
+    fn alpha_alphanum_upper_fails_with_lowercase_letter_followed_by_number_and_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum_upper("f1BAR");
+        assert_eq!(la, Err(Err::Error(("f1BAR", Alpha)))) ;
+    }
+
+    #[test]
+    fn alpha_alphanum_upper_succeeds_with_uppercase_letter_followed_by_number_and_uppercase_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum_upper("F1BAR");
+        assert_eq!(la, Ok(("","F1BAR"))) ;
+    }
+
+    #[test]
+    fn alpha_alphanum_upper_fails_with_number_followed_by_numbers_and_uppercase_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum_upper("1F1BAR");
+        assert_eq!(la, Err(Err::Error(("1F1BAR", Alpha)))) ;
+    }
+
+
+    //-----------------------//
+    // ALPHA ALPHANUM LOWER  //
+    //-----------------------// 
+
+    #[test]
+    fn alpha_alphanum_lower_fails_with_uppercase_letter_followed_by_number_and_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum_lower("F1BAR");
+        assert_eq!(la, Err(Err::Error(("F1BAR", Alpha)))) ;
+    }
+
+    #[test]
+    fn alpha_alphanum_lower_succeeds_with_lowercase_letter_followed_by_number_and_lowercase_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum_lower("f1bar");
+        assert_eq!(la, Ok(("","f1bar"))) ;
+    }
+
+    #[test]
+    fn alpha_alphanum_lower_fails_with_number_followed_by_numbers_and_lowercase_letters() {
+        let la: IResult<&str, &str> = alpha_alphanum_lower("1f1bar");
+        assert_eq!(la, Err(Err::Error(("1f1bar", Alpha)))) ;
+    }
+
 }
+
