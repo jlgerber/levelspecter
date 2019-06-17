@@ -9,7 +9,6 @@ use nom::{
 
 use aschar_casesensitive::{ upperalphanum1, alpha_alphanum, alpha_alphanum_upper};
 
-
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
     alpha_alphanum_upper(input)
@@ -25,9 +24,11 @@ fn parse_shot(input: &str) -> IResult<&str, &str> {
     preceded(tag("."), upperalphanum1 )(input)
 }
 
+// The shot alternative, has a show a sequence, and a shot
+// accumulated into a vector. 
 #[inline]
 fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1(
+    fold_many1( //used to turn the tuple into a vector
         tuple(( parse_show, parse_seq, parse_shot)),
         Vec::new(), 
         |mut acc: Vec<_>, item| {
@@ -40,10 +41,11 @@ fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     )(input)
 }
 
-
+// the sequence alternative has a show and a sequence
+// separated by a period, accumulated into a vector
 #[inline]
 fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( 
+    fold_many1( //used to turn the tuple into a vector
         tuple((parse_show, parse_seq)),
         Vec::new(), 
         |mut acc: Vec<_>, item| {
@@ -58,7 +60,7 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
 
 #[inline]
 fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1(
+    fold_many1( //used to place into a vector
         parse_show, 
         Vec::new(), 
         |mut acc: Vec<_>, item| { 
