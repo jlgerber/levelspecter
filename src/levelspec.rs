@@ -123,13 +123,13 @@ mod tests {
     }
 
 
-//  #[test]
-//     fn can_parse_shot_with_wildcard() {
-//         let result = LevelSpec::from_str("DEV01.RD.%");
-//         let expect = Ok(LevelSpec {
-//             show: LevelType::from("DEV01"), 
-//             sequence: Some(LevelType::from("RD")), 
-//             shot: Some(LevelType::from("%")) });
-//         assert_eq!(result, expect);
-//     }
+ #[test]
+    fn can_parse_shot_with_wildcard() {
+        let result = LevelSpec::from_str("DEV01.RD.%");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from("DEV01"), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: Some(LevelType::from("%")) });
+        assert_eq!(result, expect);
+    }
 }

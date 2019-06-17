@@ -11,17 +11,29 @@ use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper};
 
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
-    alpha_alphanum_upper(input)
+    alt((
+        alpha_alphanum_upper,
+        tag("%")
+    ))
+    (input)
 }
 
 #[inline]
 fn parse_seq(input: &str) -> IResult<&str, &str> {
-    preceded(tag("."), alpha_alphanum_upper)(input)
+    alt((
+        preceded(tag("."), alpha_alphanum_upper),
+        preceded(tag("."), tag("%"))
+    ))
+    (input)
 }
 
 #[inline]
 fn parse_shot(input: &str) -> IResult<&str, &str> {
-    preceded(tag("."), upperalphanum1 )(input)
+    alt((
+    preceded(tag("."), upperalphanum1 ),
+    preceded(tag("."), tag("%"))
+    ))
+    (input)
 }
 
 // The shot alternative, has a show a sequence, and a shot
@@ -89,5 +101,31 @@ pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
         //Ok((_,ls)) => Ok(ls.iter().map(|x| x.to_string()).collect::<Vec<_>>() ),
         Ok((_,ls)) => Ok(ls),
 
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn show_can_parse_wildcard() {
+        let result = parse_show("%");
+        assert!(result.is_ok());
+        assert_eq!(result, Ok(("", "%")));
+    }
+    
+    #[test]
+    fn seq_can_parse_wildcard() {
+        let result = parse_seq(".%");
+        assert!(result.is_ok());
+        assert_eq!(result, Ok(("", "%")));
+    }
+
+    #[test]
+    fn shot_can_parse_wildcard() {
+        let result = parse_shot(".%");
+        assert!(result.is_ok());
+        assert_eq!(result, Ok(("", "%")));
     }
 }
