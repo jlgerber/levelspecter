@@ -254,6 +254,37 @@ mod tests {
     }
 
     #[test]
+    fn can_parse_seq_with_relative_show() {
+        let result = LevelSpec::from_str(".RD");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from(""), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: None });
+        assert_eq!(result, expect);
+    }
+
+    #[test]
+    fn can_parse_shot_with_relative_show() {
+        let result = LevelSpec::from_str(".RD.0001");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from(""), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: Some(LevelType::from("0001")) });
+        assert_eq!(result, expect);
+    }
+
+
+    #[test]
+    fn can_parse_seq_with_relative_show_and_shot() {
+        let result = LevelSpec::from_str(".RD.");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from(""), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: Some(LevelType::from("")) });
+        assert_eq!(result, expect);
+    }
+
+    #[test]
     fn is_concrete_works() {
         let level = LevelSpec::from_str("DEV01.RD.0001").unwrap();
         assert!(level.is_concrete());

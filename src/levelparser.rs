@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use nom::{
     IResult,
     branch::alt,
@@ -167,7 +168,8 @@ fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
 // .seq.
 fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
-        terminated(parse_rel_seq, tag(".")),
+        //terminated(parse_rel_seq, tag(".")),
+        parse_rel_seqshot,
         Vec::with_capacity(3), 
         |mut acc: Vec<_>, item| {
             acc.push(""); 
@@ -212,10 +214,10 @@ fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
 fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
     let (leftover, result) = all_consuming(
         alt((
-            rel_seq_rel_alt,
             rel_seq_shot_alt,
-            shot_alt,
+            rel_seq_rel_alt,
             rel_seq_alt,
+            shot_alt,
             seq_alt,
             show_alt,
         )))
@@ -357,9 +359,15 @@ mod levelspec {
     }  
 
     #[test]
-    fn can_parse() {
-        let ls = levelspec_parser(".RD");
-        assert_eq!(ls, Ok(vec!["", "RD"]))
+    fn can_parse_rel_seq_shot() {
+        let ls = levelspec_parser(".RD.0001");
+        assert_eq!(ls, Ok(vec!["", "RD", "0001"]))
+    }
+
+    #[test]
+    fn can_parse_rel_seq_alt() {
+        let ls = levelspec_parser(".RD.");
+        assert_eq!(ls, Ok(vec!["", "RD", ""]))
     }
  }
     mod shot {
