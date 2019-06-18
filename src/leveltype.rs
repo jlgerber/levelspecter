@@ -4,7 +4,7 @@ use std::fmt;
 /// the LevelSpec
 #[derive(Debug, PartialEq, Eq)]
 pub enum LevelType {
-    Dir(String),
+    Term(String),
     Wildcard,
 }
 
@@ -18,6 +18,14 @@ impl LevelType {
             false
         }
     }
+
+    /// Convert to a str
+    pub fn to_str(&self) -> &str {
+        match *self {
+            LevelType::Term(ref val) => val,
+            LevelType::Wildcard => "%",
+        }
+    }
 }
 
 impl From<&str> for LevelType {
@@ -25,7 +33,7 @@ impl From<&str> for LevelType {
         if input == "%" { 
             LevelType::Wildcard 
         } else {
-            LevelType::Dir(input.to_owned())
+            LevelType::Term(input.to_owned())
         }  
     }
 }
@@ -33,7 +41,7 @@ impl From<&str> for LevelType {
 impl fmt::Display for LevelType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
        match &self {
-           &LevelType::Dir(d) => write!(f, "{}", d),
+           &LevelType::Term(d) => write!(f, "{}", d),
            &LevelType::Wildcard => write!(f, "%"),
        }
     }

@@ -2,14 +2,14 @@ use nom::{
     IResult,
     branch::alt,
     combinator::{all_consuming},
-    bytes::complete::{tag},
+    bytes::complete::{tag, tag_no_case},
     character::complete::digit1,
     sequence::{tuple, preceded },
     multi::{ fold_many1},
 };
 
 use crate::LevelSpecterError;
-use aschar_casesensitive::{ /*upperalphanum1,*/ alpha_alphanum_upper};
+use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum};
 
 
 /// Parse a levelspec from a string
@@ -43,7 +43,7 @@ pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
     alt((
-        alpha_alphanum_upper,
+        alpha_alphanum,
         tag("%")
     ))
     (input)
@@ -52,7 +52,7 @@ fn parse_show(input: &str) -> IResult<&str, &str> {
 #[inline]
 fn parse_seq(input: &str) -> IResult<&str, &str> {
     alt((
-        preceded(tag("."), alpha_alphanum_upper),
+        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum} else {alpha_alphanum_upper}),
         preceded(tag("."), tag("%"))
     ))
     (input)
@@ -68,10 +68,21 @@ fn parse_shot(input: &str) -> IResult<&str, &str> {
 }
 
 // NOTE: if I decide to go case insensitive, there is tag_no_case()
+#[cfg(feature = "case-insensitive")]
 #[inline]
 fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     alt((
-        preceded(tag("."), tag("ASSETDEV")),
+        preceded(tag("."),tag_no_case("ASSETDEV")),
+        preceded(tag("."), tag("%"))
+    ))
+    (input)
+}
+// NOTE: if I decide to go case insensitive, there is tag_no_case()
+#[cfg(not(feature = "case-insensitive"))]
+#[inline]
+fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
+    alt((
+        preceded(tag("."),tag("ASSETDEV")),
         preceded(tag("."), tag("%"))
     ))
     (input)
@@ -80,7 +91,7 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
 #[inline]
 fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
     alt((
-        preceded(tag("."), alpha_alphanum_upper ),
+        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum} else {alpha_alphanum_upper} ),
         preceded(tag("."), tag("%"))
     ))
     (input)
@@ -163,6 +174,13 @@ mod levelspec {
             let ls = levelspec_parser("DEV01");
             assert_eq!(ls, Ok(vec!["DEV01"]))
         }
+        
+        #[cfg(feature = "case-insensitive")]
+        #[test]
+        fn can_parse_lowercase() {
+            let ls = levelspec_parser("dev01");
+            assert_eq!(ls, Ok(vec!["dev01"]))
+        }
 
         #[test]
         fn cannot_start_with_number() {
@@ -203,11 +221,25 @@ mod levelspec {
             let ls = levelspec_parser("DEV01.RD");
             assert_eq!(ls, Ok(vec!["DEV01", "RD"]))
         }
+
+        #[cfg(feature = "case-insensitive")]
+        #[test]
+        fn can_parse_lowercase() {
+            let ls = levelspec_parser("dev01.rd");
+            assert_eq!(ls, Ok(vec!["dev01", "rd"]))
+        }
     
         #[test]
         fn can_parse_assetdev() {
             let ls = levelspec_parser("DEV01.ASSETDEV");
             assert_eq!(ls, Ok(vec!["DEV01", "ASSETDEV"]))
+        }
+
+        #[cfg(feature = "case-insensitive")]
+        #[test]
+        fn can_parse_assetdev_lowercase() {
+            let ls = levelspec_parser("dev01.assetdev");
+            assert_eq!(ls, Ok(vec!["dev01", "assetdev"]))
         }
 
         #[test]
@@ -254,6 +286,13 @@ mod levelspec {
         fn can_parse_assetdev() {
             let ls = levelspec_parser("DEV01.ASSETDEV.FOOBAR");
             assert_eq!(ls, Ok(vec!["DEV01", "ASSETDEV", "FOOBAR"]))
+        }
+
+        #[cfg(feature = "case-insensitive")]
+        #[test]
+        fn can_parse_assetdev_lowercase() {
+            let ls = levelspec_parser("dev01.assetdev.foobar");
+            assert_eq!(ls, Ok(vec!["dev01", "assetdev", "foobar"]))
         }
 
         #[test]

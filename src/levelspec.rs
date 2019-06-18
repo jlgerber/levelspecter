@@ -21,16 +21,16 @@ impl LevelSpec {
     
     /// Convert to uppercase
     pub fn set_upper(&mut self) {
-        if let LevelType::Dir(ref mut show) = self.show {*show = show.to_uppercase()}
-        if let Some(LevelType::Dir(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
-        if let Some(LevelType::Dir(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
+        if let LevelType::Term(ref mut show) = self.show {*show = show.to_uppercase()}
+        if let Some(LevelType::Term(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
+        if let Some(LevelType::Term(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
     }
 
-    /// Convert to uppercase
+    /// Convert to uppercase and return self. Used to chain after from
     pub fn upper(mut self) -> Self {
-        if let LevelType::Dir(ref mut show) = self.show {*show = show.to_uppercase()}
-        if let Some(LevelType::Dir(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
-        if let Some(LevelType::Dir(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
+        if let LevelType::Term(ref mut show) = self.show {*show = show.to_uppercase()}
+        if let Some(LevelType::Term(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
+        if let Some(LevelType::Term(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
         self
     }
 
@@ -84,9 +84,47 @@ impl LevelSpec {
                 return false
             }
         }
-
         true
    }
+
+
+    /// Retrieve the show if it exists. Otherwise return None
+    pub fn show(&self) -> &str {
+        self.show.to_str()
+    }
+
+    /// Retrieve the sequence as a string wrapped in an Option
+    pub fn sequence(&self) -> Option<&str> {
+        if let Some(ref val) = self.sequence {
+            Some(val.to_str())
+        } else {
+            None
+        }
+    }
+
+    /// Retrieve the sequence as a string wrapped in an Option
+    pub fn shot(&self) -> Option<&str> {
+        if let Some(ref val) = self.shot {
+            Some(val.to_str())
+        } else {
+            None
+        }
+    }
+
+    /// Convert to a vector of &str
+    pub fn to_vec_str<'a>(&'a self) -> Vec<&'a str> {
+        let mut vec_strs = Vec::<&'a str>::new();
+        //let val = self.show.to_str();
+        vec_strs.push(self.show.to_str());
+        if let Some(ref val) = self.sequence {
+            vec_strs.push(val.to_str());
+            if let Some(ref val) = self.shot {
+                vec_strs.push(val.to_str());
+            }
+        }
+        vec_strs
+    }
+
 }
 
 impl FromStr for LevelSpec {
@@ -132,14 +170,22 @@ mod tests {
         assert_eq!(result, expect);
     }
 
- #[test]
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_show_lower() {
+        let result = LevelSpec::from_str("dev01");
+        let expect = Ok(LevelSpec {show: LevelType::from("dev01"), sequence: None, shot: None });
+        assert_eq!(result, expect);
+    }
+
+    #[test]
     fn can_parse_seq() {
         let result = LevelSpec::from_str("DEV01.RD");
         let expect = Ok(LevelSpec {show: LevelType::from("DEV01"), sequence: Some(LevelType::from("RD")), shot: None });
         assert_eq!(result, expect);
     }
 
- #[test]
+    #[test]
     fn can_parse_shot() {
         let result = LevelSpec::from_str("DEV01.RD.0001");
         let expect = Ok(LevelSpec {
@@ -149,8 +195,29 @@ mod tests {
         assert_eq!(result, expect);
     }
 
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_shot_lower() {
+        let result = LevelSpec::from_str("dev01.rd.0001");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from("dev01"), 
+            sequence: Some(LevelType::from("rd")), 
+            shot: Some(LevelType::from("0001")) });
+        assert_eq!(result, expect);
+    }
 
- #[test]
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_upper_shot() {
+        let result = LevelSpec::from_str("dev01.rd.0001").unwrap().upper();
+        let expect = LevelSpec {
+            show: LevelType::from("DEV01"), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: Some(LevelType::from("0001")) };
+        assert_eq!(result, expect);
+    }
+
+    #[test]
     fn can_parse_shot_with_wildcard() {
         let result = LevelSpec::from_str("DEV01.RD.%");
         let expect = Ok(LevelSpec {
