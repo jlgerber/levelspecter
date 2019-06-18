@@ -9,7 +9,7 @@ use nom::{
 };
 
 use crate::LevelSpecterError;
-use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum};
+use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum, alpha_alphanum_upper_alpha, alpha_alphanum_alpha};
 
 
 /// Parse a levelspec from a string
@@ -34,7 +34,6 @@ use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum
 pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
     match levelparser(input) {
         Err(_) => Err( LevelSpecterError::ParseError(format!("Unable to parse levelspec for {}", input))),
-        //Ok((_,ls)) => Ok(ls.iter().map(|x| x.to_string()).collect::<Vec<_>>() ),
         Ok((_,ls)) => Ok(ls),
 
     }
@@ -52,7 +51,7 @@ fn parse_show(input: &str) -> IResult<&str, &str> {
 #[inline]
 fn parse_seq(input: &str) -> IResult<&str, &str> {
     alt((
-        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum} else {alpha_alphanum_upper}),
+        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum_alpha} else {alpha_alphanum_upper_alpha}),
         preceded(tag("."), tag("%"))
     ))
     (input)
@@ -91,7 +90,7 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
 #[inline]
 fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
     alt((
-        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum} else {alpha_alphanum_upper} ),
+        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum_alpha} else {alpha_alphanum_upper_alpha} ),
         preceded(tag("."), tag("%"))
     ))
     (input)
@@ -186,7 +185,7 @@ mod levelspec {
         #[test]
         fn cannot_parse_lowercase() {
             let ls = levelspec_parser("dev01");
-            assert_eq!(ls, Ok(vec!["dev01"]))
+            assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for dev01".to_string())));
         }
 
         #[test]

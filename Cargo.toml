@@ -11,4 +11,4 @@ failure = "0.1.5"
 
 [features]
 default = []
-#case-insensitive = []   
+case-insensitive = []   
