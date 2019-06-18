@@ -4,7 +4,7 @@ use nom::{
     combinator::{all_consuming},
     bytes::complete::{tag, tag_no_case},
     character::complete::digit1,
-    sequence::{tuple, preceded },
+    sequence::{tuple, preceded, terminated },
     multi::{ fold_many1},
 };
 
@@ -98,9 +98,15 @@ fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
 
 // TODO: support relative levelspec (eg  .AA or ..0001 or .AA. )
 // rel_seq tuple((parse_seq))
-// rel_shot tuple((parse_seq, parse_shot))
-// rel_seqshot tuple((terminated(parse_seq,tag("."))))
+fn parse_rel_seq(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum_alpha} else {alpha_alphanum_upper_alpha})(input)
+}
 
+
+// rel_seqshot tuple((terminated(parse_seq,tag("."))))
+fn parse_rel_seqshot(input: &str) -> IResult<&str, &str> {
+    terminated(parse_rel_seq, tag("."))(input)
+}
 
 // The shot alternative, has a show a sequence, and a shot
 // accumulated into a vector. 
@@ -140,6 +146,55 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+// the sequence alternative has a show and a sequence
+// separated by a period, accumulated into a vector
+#[inline]
+// .seq
+fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1( //used to turn the tuple into a vector
+        parse_rel_seq,
+        Vec::with_capacity(2), 
+        |mut acc: Vec<_>, item| {
+            acc.push(""); 
+            acc.push(item);
+            acc
+        } 
+    )
+    (input)
+}
+
+#[inline]
+// .seq.
+fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1( //used to turn the tuple into a vector
+        terminated(parse_rel_seq, tag(".")),
+        Vec::with_capacity(3), 
+        |mut acc: Vec<_>, item| {
+            acc.push(""); 
+            acc.push(item);
+            acc.push(""); 
+            acc
+        } 
+    )
+    (input)
+}
+
+#[inline]
+// .seq.
+fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1( //used to turn the tuple into a vector
+        tuple((parse_rel_seq, parse_shot)),
+        Vec::with_capacity(3), 
+        |mut acc: Vec<_>, item| {
+            let (seq, shot) = item;
+            acc.push(""); 
+            acc.push(seq);
+            acc.push(shot); 
+            acc
+        } 
+    )
+    (input)
+}
 
 #[inline]
 fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
@@ -157,7 +212,10 @@ fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
 fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
     let (leftover, result) = all_consuming(
         alt((
+            rel_seq_rel_alt,
+            rel_seq_shot_alt,
             shot_alt,
+            rel_seq_alt,
             seq_alt,
             show_alt,
         )))
@@ -289,7 +347,21 @@ mod levelspec {
             assert_eq!(ls, Ok(vec!["DEV01","%"]))
         }
     }
+ mod rel_seq {
+    use super::*;
+    
+    #[test]
+    fn can_parse_rel_seq() {
+        let ls = rel_seq_alt(".RD");
+        assert_eq!(ls, Ok(("",vec!["", "RD"])))
+    }  
 
+    #[test]
+    fn can_parse() {
+        let ls = levelspec_parser(".RD");
+        assert_eq!(ls, Ok(vec!["", "RD"]))
+    }
+ }
     mod shot {
         use super::*;
     

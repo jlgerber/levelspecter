@@ -6,6 +6,7 @@ use std::fmt;
 pub enum LevelType {
     Term(String),
     Wildcard,
+    Relative
 }
 
 impl LevelType {
@@ -19,22 +20,39 @@ impl LevelType {
         }
     }
 
+    pub fn is_relative(&self) -> bool {
+        if self == &LevelType::Relative {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_term(&self) -> bool {
+        if let &LevelType::Term(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
     /// Convert to a str
     pub fn to_str(&self) -> &str {
         match *self {
             LevelType::Term(ref val) => val,
             LevelType::Wildcard => "%",
+            LevelType::Relative => "",
         }
     }
 }
 
 impl From<&str> for LevelType {
     fn from(input: &str) -> Self {
-        if input == "%" { 
-            LevelType::Wildcard 
-        } else {
-            LevelType::Term(input.to_owned())
-        }  
+        match input {
+            "%" => LevelType::Wildcard,
+            "" => LevelType::Relative,
+            _ =>  LevelType::Term(input.to_owned())
+        }
     }
 }
 
@@ -43,6 +61,7 @@ impl fmt::Display for LevelType {
        match &self {
            &LevelType::Term(d) => write!(f, "{}", d),
            &LevelType::Wildcard => write!(f, "%"),
+           &LevelType::Relative => write!(f, ""),
        }
     }
 }
