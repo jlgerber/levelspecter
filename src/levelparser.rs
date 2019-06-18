@@ -29,8 +29,13 @@ use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum
 /// ```
 /// use levelspecter::{levelspec_parser, LevelSpecterError};
 /// 
+/// // parse shot
 /// let results = levelspec_parser("DEV01.RD.0001");
 /// assert_eq!(results, Ok(vec!["DEV01", "RD", "0001"]));
+/// 
+/// // parse relative shot
+/// let results = levelspec_parser(".RD.0001");
+/// assert_eq!(results, Ok(vec!["", "RD", "0001"]));
 /// ```
 pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
     match levelparser(input) {

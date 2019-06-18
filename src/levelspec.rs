@@ -11,7 +11,25 @@ pub struct LevelSpec {
 }
 
 impl LevelSpec {
-    /// New up a LevelSpec from a str or string
+    /// New up a LevelSpec from a str or string. This is the primary entrypoint for the crate. 
+    /// 
+    /// # Parameters
+    /// 
+    /// * `levelspec` - The string we wish to convert to a levelspec. This takes any type 
+    ///                 which is AsRef<str>
+    /// 
+    /// # Returns
+    /// A LevelSpec instance or error
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// use levelspecter::{LevelSpec, LevelSpecterError};
+    /// 
+    /// let result = LevelSpec::new("DEV01.RD.0001");
+    /// let expected = LevelSpec::from_shot("DEV01", "RD", "0001");
+    /// assert_eq!(result, Ok(expected));
+    /// ```
     pub fn new<I>(levelspec: I) -> Result<LevelSpec, LevelSpecterError> 
     where
         I: AsRef<str> + std::fmt::Debug
@@ -39,33 +57,36 @@ impl LevelSpec {
     where 
         I: AsRef<str>
     {
-        Self {
+        let ls = Self {
             show: LevelType::from(input.as_ref()), 
             sequence: None, 
             shot: None
-        }
+        };
+        if cfg!(feature = "case-insensitive") {ls} else {ls.upper()}
     }
     /// new up a sequence
     pub fn from_sequence<I>(show: I, sequence: I ) -> Self  
     where 
         I: AsRef<str>
     {
-        Self {
+        let ls = Self {
             show: LevelType::from(show.as_ref()), 
             sequence: Some(LevelType::from(sequence.as_ref())), 
             shot: None
-        }
+        };
+        if cfg!(feature = "case-insensitive") {ls} else {ls.upper()}
     }
 
     pub fn from_shot<I>(show: I, sequence: I, shot: I) -> Self  
     where 
         I: AsRef<str>
     {
-        Self {
+        let ls = Self {
             show: LevelType::from(show.as_ref()), 
             sequence: Some(LevelType::from(sequence.as_ref())), 
             shot: Some(LevelType::from(shot.as_ref()))
-        }
+        };
+        if cfg!(feature = "case-insensitive") {ls} else {ls.upper()}
     }
 
    pub fn is_concrete(&self) -> bool {
