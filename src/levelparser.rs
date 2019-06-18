@@ -96,6 +96,12 @@ fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
     (input)
 }
 
+// TODO: support relative levelspec (eg  .AA or ..0001 or .AA. )
+// rel_seq tuple((parse_seq))
+// rel_shot tuple((parse_seq, parse_shot))
+// rel_seqshot tuple((terminated(parse_seq,tag("."))))
+
+
 // The shot alternative, has a show a sequence, and a shot
 // accumulated into a vector. 
 #[inline]
@@ -159,7 +165,6 @@ fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
 
     Ok((leftover, result))
 }
-
 
 #[cfg(test)]
 mod levelspec {
