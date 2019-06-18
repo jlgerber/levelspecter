@@ -11,28 +11,60 @@ pub struct LevelSpec {
 }
 
 impl LevelSpec {
+    /// New up a LevelSpec from a str or string
+    pub fn new<I>(levelspec: I) -> Result<LevelSpec, LevelSpecterError> 
+    where
+        I: AsRef<str> + std::fmt::Debug
+    {
+        LevelSpec::from_str(levelspec.as_ref())
+    }
+    
+    /// Convert to uppercase
+    pub fn set_upper(&mut self) {
+        if let LevelType::Dir(ref mut show) = self.show {*show = show.to_uppercase()}
+        if let Some(LevelType::Dir(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
+        if let Some(LevelType::Dir(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
+    }
+
+    /// Convert to uppercase
+    pub fn upper(mut self) -> Self {
+        if let LevelType::Dir(ref mut show) = self.show {*show = show.to_uppercase()}
+        if let Some(LevelType::Dir(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
+        if let Some(LevelType::Dir(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
+        self
+    }
+
     /// new up a show
-    pub fn new_show(input: &str ) -> Self  {
+    pub fn from_show<I>(input: I ) -> Self
+    where 
+        I: AsRef<str>
+    {
         Self {
-            show: LevelType::from(input), 
+            show: LevelType::from(input.as_ref()), 
             sequence: None, 
             shot: None
         }
     }
     /// new up a sequence
-    pub fn new_sequence(show: &str, sequence: &str ) -> Self  {
+    pub fn from_sequence<I>(show: I, sequence: I ) -> Self  
+    where 
+        I: AsRef<str>
+    {
         Self {
-            show: LevelType::from(show), 
-            sequence: Some(LevelType::from(sequence)), 
+            show: LevelType::from(show.as_ref()), 
+            sequence: Some(LevelType::from(sequence.as_ref())), 
             shot: None
         }
     }
 
-    pub fn new_shot(show: &str, sequence: &str, shot: &str) -> Self  {
+    pub fn from_shot<I>(show: I, sequence: I, shot: I) -> Self  
+    where 
+        I: AsRef<str>
+    {
         Self {
-            show: LevelType::from(show), 
-            sequence: Some(LevelType::from(sequence)), 
-            shot: Some(LevelType::from(shot))
+            show: LevelType::from(show.as_ref()), 
+            sequence: Some(LevelType::from(sequence.as_ref())), 
+            shot: Some(LevelType::from(shot.as_ref()))
         }
     }
 
@@ -63,9 +95,9 @@ impl FromStr for LevelSpec {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let levels = levelspec_parser(s)?;
         match levels.len() {
-            3 => Ok(LevelSpec::new_shot(levels[0], levels[1], levels[2])),
-            2 => Ok(LevelSpec::new_sequence(levels[0], levels[1])),
-            1 => Ok(LevelSpec::new_show(levels[0])),
+            3 => Ok(LevelSpec::from_shot(levels[0], levels[1], levels[2])),
+            2 => Ok(LevelSpec::from_sequence(levels[0], levels[1])),
+            1 => Ok(LevelSpec::from_show(levels[0])),
             _ => panic!("cannot create levelspec with more than 3 levels")
         }
     }
