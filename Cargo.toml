@@ -10,4 +10,5 @@ aschar-casesensitive = { git = "https://github.com/jlgerber/aschar-casesensitive
 failure = "0.1.5"
 
 [features]
-case-insensitive = []   
+default = []
+#case-insensitive = []   

@@ -178,10 +178,24 @@ mod tests {
         assert_eq!(result, expect);
     }
 
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn cannot_parse_show_lower() {
+        let result = LevelSpec::from_str("dev01");
+        assert_eq!(
+            result, 
+            Err(LevelSpecterError::ParseError(
+                "Unable to parse levelspec for dev01".to_string())));
+    }
+
     #[test]
     fn can_parse_seq() {
         let result = LevelSpec::from_str("DEV01.RD");
-        let expect = Ok(LevelSpec {show: LevelType::from("DEV01"), sequence: Some(LevelType::from("RD")), shot: None });
+        let expect = Ok(LevelSpec { 
+            show: LevelType::from("DEV01"), 
+            sequence: Some(LevelType::from("RD")), 
+            shot: None 
+        });
         assert_eq!(result, expect);
     }
 
@@ -205,6 +219,18 @@ mod tests {
             shot: Some(LevelType::from("0001")) });
         assert_eq!(result, expect);
     }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_parse_shot_lower() {
+        let result = LevelSpec::from_str("dev01.rd.0001");
+        assert_eq!(
+            result, 
+            Err(LevelSpecterError::ParseError(
+                "Unable to parse levelspec for dev01.rd.0001".to_string()))
+        );
+    }
+
 
     #[cfg(feature = "case-insensitive")]
     #[test]

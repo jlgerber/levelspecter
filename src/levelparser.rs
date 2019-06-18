@@ -43,7 +43,7 @@ pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
     alt((
-        alpha_alphanum,
+        if cfg!(feature = "case-insensitive") {alpha_alphanum} else {alpha_alphanum_upper},
         tag("%")
     ))
     (input)
@@ -68,8 +68,8 @@ fn parse_shot(input: &str) -> IResult<&str, &str> {
 }
 
 // NOTE: if I decide to go case insensitive, there is tag_no_case()
-#[cfg(feature = "case-insensitive")]
 #[inline]
+#[cfg(feature = "case-insensitive")]
 fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     alt((
         preceded(tag("."),tag_no_case("ASSETDEV")),
@@ -78,8 +78,8 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     (input)
 }
 // NOTE: if I decide to go case insensitive, there is tag_no_case()
-#[cfg(not(feature = "case-insensitive"))]
 #[inline]
+#[cfg(not(feature = "case-insensitive"))]
 fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     alt((
         preceded(tag("."),tag("ASSETDEV")),
@@ -182,6 +182,13 @@ mod levelspec {
             assert_eq!(ls, Ok(vec!["dev01"]))
         }
 
+        #[cfg(not(feature = "case-insensitive"))]
+        #[test]
+        fn cannot_parse_lowercase() {
+            let ls = levelspec_parser("dev01");
+            assert_eq!(ls, Ok(vec!["dev01"]))
+        }
+
         #[test]
         fn cannot_start_with_number() {
             let ls = levelspec_parser("1DEV01");
@@ -242,6 +249,12 @@ mod levelspec {
             assert_eq!(ls, Ok(vec!["dev01", "assetdev"]))
         }
 
+        #[cfg(not(feature = "case-insensitive"))]
+        #[test]
+        fn can_parse_assetdev_lowercase() {
+            let ls = levelspec_parser("dev01.assetdev");
+            assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for dev01.assetdev".to_string())))
+        }
         #[test]
         fn cannot_start_with_number() {
             let ls = levelspec_parser("DEV01.1D");
@@ -293,6 +306,13 @@ mod levelspec {
         fn can_parse_assetdev_lowercase() {
             let ls = levelspec_parser("dev01.assetdev.foobar");
             assert_eq!(ls, Ok(vec!["dev01", "assetdev", "foobar"]))
+        }
+
+        #[cfg(not(feature = "case-insensitive"))]
+        #[test]
+        fn cannot_parse_assetdev_lowercase() {
+            let ls = levelspec_parser("dev01.assetdev.foobar");
+            assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for dev01.assetdev.foobar".to_string())))
         }
 
         #[test]
