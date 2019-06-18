@@ -328,4 +328,91 @@ mod tests {
         let level = LevelSpec::from_str("DEV01.RD.%").unwrap();
         assert!(!level.is_concrete());
     }
+
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_new_up_shot() {
+        let result = LevelSpec::from_shot("dev01", "rd", "0001");
+        assert_eq!(
+            result, 
+            LevelSpec{
+                show: LevelType::from("DEV01"),
+                sequence: Some(LevelType::from("RD")),
+                shot: Some(LevelType::from("0001"))
+            }
+        );
+    }
+
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_new_up_shot() {
+        let result = LevelSpec::from_shot("dev01", "rd", "0001");
+        assert_eq!(
+            result, 
+            LevelSpec{
+                show: LevelType::from("dev01"),
+                sequence: Some(LevelType::from("rd")),
+                shot: Some(LevelType::from("0001"))
+            }
+        );
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_new_up_seq() {
+        let result = LevelSpec::from_sequence("dev01", "rd");
+        assert_eq!(
+            result, 
+            LevelSpec{
+                show: LevelType::from("DEV01"),
+                sequence: Some(LevelType::from("RD")),
+                shot: None
+            }
+        );
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_new_up_seq() {
+        let result = LevelSpec::from_sequence("dev01", "rd");
+        assert_eq!(
+            result, 
+            LevelSpec{
+                show: LevelType::from("dev01"),
+                sequence: Some(LevelType::from("rd")),
+                shot: None
+            }
+        );
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_new_up_show() {
+        let result = LevelSpec::from_show("dev01");
+        assert_eq!(
+            result, 
+            LevelSpec{
+                show: LevelType::from("DEV01"),
+                sequence: None,
+                shot: None
+            }
+        );
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_new_up_show() {
+        let result = LevelSpec::from_sequence("dev01");
+        assert_eq!(
+            result, 
+            LevelSpec{
+                show: LevelType::from("dev01"),
+                sequence: None,
+                shot: None
+            }
+        );
+    }
+
 }
