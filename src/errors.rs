@@ -8,4 +8,7 @@ pub enum LevelSpecterError {
     #[fail(display = "Parse Error {}", _0)]
     ParseError(String),
     
+    #[fail(display = "RelToAbs Error: {}", _0)]
+    RelToAbsError(String),
+
 }

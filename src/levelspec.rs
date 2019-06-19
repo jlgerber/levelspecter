@@ -1,13 +1,19 @@
-use crate::{LevelSpecterError, levelspec_parser, LevelType};
+use crate::{LevelSpecterError as LSE, levelspec_parser, LevelType};
 use  std::str::FromStr;
 use std::fmt;
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub enum LevelName {
+    Show,
+    Sequence,
+    Shot,
+}
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LevelSpec {
-    show: LevelType,
-    sequence: Option<LevelType>,
-    shot: Option<LevelType>
+    pub show: LevelType,
+    pub sequence: Option<LevelType>,
+    pub shot: Option<LevelType>
 }
 
 impl LevelSpec {
@@ -24,13 +30,13 @@ impl LevelSpec {
     /// # Example
     /// 
     /// ```
-    /// use levelspecter::{LevelSpec, LevelSpecterError};
+    /// use levelspecter::{LevelSpec, LSE};
     /// 
     /// let result = LevelSpec::new("DEV01.RD.0001");
     /// let expected = LevelSpec::from_shot("DEV01", "RD", "0001");
     /// assert_eq!(result, Ok(expected));
     /// ```
-    pub fn new<I>(levelspec: I) -> Result<LevelSpec, LevelSpecterError> 
+    pub fn new<I>(levelspec: I) -> Result<LevelSpec, LSE> 
     where
         I: AsRef<str> + std::fmt::Debug
     {
@@ -50,6 +56,68 @@ impl LevelSpec {
         if let Some(LevelType::Term(ref mut sequence)) = self.sequence {*sequence = sequence.to_uppercase()}
         if let Some(LevelType::Term(ref mut shot)) = self.shot {*shot = shot.to_uppercase()}
         self
+    }
+
+    /// Return a new LevelSpec instance that removes any relative LevelTypes.
+    /// rel_to_abs takes a closure to perform said magic
+    /// 
+    /// # Parameters
+    /// 
+    /// * `replacer` - Closure which takes a LevelName and returns an Option<String>
+    /// 
+    /// # Returns
+    /// A new LevelSpec without any relative components if successful
+    /// Otherwise, a LevelSpecterError
+    /// 
+    pub fn rel_to_abs<P>(&self, replacer: P ) -> Result<Self, LSE> 
+    where
+        P: Fn(LevelName) -> Option<String>
+    {
+        let mut return_value = self.clone();
+
+        if return_value.show.is_relative() {
+            let new_show_val = replacer(LevelName::Show)
+                .ok_or(LSE::RelToAbsError(format!("Unable to retrieve {:?} in rel_to_abs",
+                LevelName::Show)))?;
+            let new_show = LevelType::from(new_show_val.as_ref());
+
+            if new_show.is_relative() { 
+                return Err(LSE::RelToAbsError(format!("show returned by closure is relative '{}'", new_show_val))) ;
+            }
+
+            return_value.show = new_show;
+        }
+
+        if let Some(ref seq) = return_value.sequence {
+            if seq.is_relative() {
+                let new_seq_val = replacer(LevelName::Sequence)
+                .ok_or(LSE::RelToAbsError(format!("Unable to retrieve {:?} in rel_to_abs",
+                LevelName::Sequence)))?;
+                let new_seq = LevelType::from(new_seq_val.as_ref());
+
+                if new_seq.is_relative() {
+                    return Err(LSE::RelToAbsError(format!("sequence returned by closure is relative '{}'", new_seq_val))) ;
+                }
+
+                return_value.sequence = Some(new_seq);
+            }
+        }
+
+        if let Some(ref shot) = return_value.shot {
+            if shot.is_relative() {
+                let new_shot_val = replacer(LevelName::Shot)
+                .ok_or(LSE::RelToAbsError(format!("Unable to retrieve {:?} in rel_to_abs",
+                LevelName::Shot)))?;
+                let new_shot = LevelType::from(new_shot_val.as_ref());
+
+                if new_shot.is_relative() {
+                    return Err(LSE::RelToAbsError(format!("shot returned by closure is relative '{}'", new_shot_val))) ;
+                }
+
+                return_value.shot = Some(new_shot);
+            }
+        }
+        Ok(return_value)
     }
 
     /// new up a show
@@ -149,7 +217,7 @@ impl LevelSpec {
 }
 
 impl FromStr for LevelSpec {
-    type Err = LevelSpecterError;
+    type Err = LSE;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let levels = levelspec_parser(s)?;
@@ -185,6 +253,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn can_replace_rel() {
+        let ls = LevelSpec::from_str("..0001").unwrap();
+        let new_ls = ls.rel_to_abs(|level|{
+            match level {
+                LevelName::Show => Some("DEV01".to_string()),
+                LevelName::Sequence => Some("RD".to_string()),
+                _ => None
+            }
+        });
+
+        assert_eq!(new_ls, Ok(LevelSpec::from_shot("DEV01", "RD", "0001")));
+    }
+    #[test]
     fn can_parse_show() {
         let result = LevelSpec::from_str("DEV01");
         let expect = Ok(LevelSpec {show: LevelType::from("DEV01"), sequence: None, shot: None });
@@ -205,7 +286,7 @@ mod tests {
         let result = LevelSpec::from_str("dev01");
         assert_eq!(
             result, 
-            Err(LevelSpecterError::ParseError(
+            Err(LSE::ParseError(
                 "Unable to parse levelspec for dev01".to_string())));
     }
 
@@ -247,7 +328,7 @@ mod tests {
         let result = LevelSpec::from_str("dev01.rd.0001");
         assert_eq!(
             result, 
-            Err(LevelSpecterError::ParseError(
+            Err(LSE::ParseError(
                 "Unable to parse levelspec for dev01.rd.0001".to_string()))
         );
     }

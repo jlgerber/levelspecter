@@ -2,7 +2,7 @@ use std::fmt;
 
 /// Enum which models types of entries available in 
 /// the LevelSpec
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LevelType {
     Term(String),
     Wildcard,
