@@ -404,7 +404,7 @@ mod tests {
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_new_up_show() {
-        let result = LevelSpec::from_sequence("dev01");
+        let result = LevelSpec::from_show("dev01");
         assert_eq!(
             result, 
             LevelSpec{
