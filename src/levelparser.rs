@@ -46,7 +46,9 @@ pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
     }
 }
 
-
+//-------------------//
+//    parse_show     //
+//-------------------//
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
     alt((
@@ -75,6 +77,10 @@ mod parse_show {
     }  
 }
 
+
+//--------------------//
+//     parse_seq      //
+//--------------------//
 #[inline]
 fn parse_seq(input: &str) -> IResult<&str, &str> {
     alt((
@@ -103,6 +109,10 @@ mod parse_seq {
     }  
 }
 
+
+//---------------------//
+//      parse_shot     //
+//---------------------//
 #[inline]
 fn parse_shot(input: &str) -> IResult<&str, &str> {
     alt((
@@ -124,6 +134,9 @@ mod parse_shot {
 }
 
 
+//-----------------------//
+//   parse_assetdev_seq  //
+//-----------------------//
 #[inline]
 #[cfg(feature = "case-insensitive")]
 fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
@@ -161,6 +174,10 @@ mod parse_assetdev_seq_case_insensitive {
     
 }
 
+
+//---------------------------//
+//    parse_assetdev_seq     //
+//---------------------------//
 // parse the assetdev sequence
 #[inline]
 #[cfg(not(feature = "case-insensitive"))]
@@ -213,6 +230,9 @@ mod parse_assetdev_seq_case_sensitive {
 }
 
 
+//---------------------//
+// parse_assetdev_shot //
+//---------------------//
 #[inline]
 fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
     alt((
@@ -249,6 +269,9 @@ mod parse_assetdev_shot {
 }
 
 
+//------------------------//
+//     parse_rel_seq      //
+//------------------------//
 // parse relative sequence. 
 // EG .RD or .%
 fn parse_rel_seq(input: &str) -> IResult<&str, &str> {
@@ -292,6 +315,9 @@ mod parse_rel_seq {
 }
 
 
+//--------------------------//
+//  parse_rel_assetdev_seq  //
+//--------------------------//
 // parse relative assetdev sequence, case sensitive version
 // EG .ASSETDEV
 #[inline]
@@ -301,6 +327,10 @@ fn parse_rel_assetdev_seq(input: &str) -> IResult<&str, &str> {
     (input)
 }
 
+
+//--------------------------//
+//  parse_rel_assetdev_seq  //
+//--------------------------//
 // parse relative assetdev sequence, case insensitive version
 // EG .assetdev or .ASSETDEV
 #[inline]
@@ -338,6 +368,9 @@ mod parse_rel_assetdev_seq {
 }
 
 
+//---------------------------//
+//    parse_rel_seq_rel      //
+//---------------------------//
 // parse relative sequence with trailing relative 
 // EG .RD.
 #[inline]
@@ -406,6 +439,10 @@ mod parse_rel_seq_rel {
     }  
 }
 
+
+//---------------------//
+//   parse_rel_shot    //
+//---------------------//
 // parse relative shot
 // EG ..0001
 #[inline]
@@ -430,6 +467,10 @@ mod parse_rel_shot {
     }  
 }
 
+
+//----------------------//
+//       shot_alt       //
+//----------------------// 
 // The shot alternative, has a show a sequence, and a shot
 // accumulated into a vector. 
 #[inline]
@@ -452,6 +493,70 @@ fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+#[cfg(test)]
+mod shot_alt {
+    use super::*;
+
+    #[test]
+    fn can_parse() {
+        let ls = shot_alt("DEV01.RS.0001");
+        assert_eq!(ls, Ok(("",vec!["DEV01", "RS", "0001"])))
+    }
+
+    #[test]
+    fn can_parse_assetdev() {
+        let ls = shot_alt("DEV01.ASSETDEV.FOOBAR");
+        assert_eq!(ls, Ok(("",vec!["DEV01", "ASSETDEV", "FOOBAR"])))
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = shot_alt("dev01.assetdev.foobar");
+        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Many1))))
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn cannot_parse_assetdev_lowercase() {
+        let ls = shot_alt("dev01.assetdev.foobar");
+        assert_eq!(ls, Ok(("",vec!["dev01", "assetdev", "foobar"])))
+    }
+
+    #[test]
+    fn cannot_start_with_letter() {
+        let ls = shot_alt("DEV01.RD.R0001");
+        assert_eq!(ls, Err(NomErr::Error(("DEV01.RD.R0001", ErrorKind::Many1))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = shot_alt("DEV01.RD.0 001");
+        assert_eq!(ls,  Ok((" 001", vec!["DEV01", "RD", "0"])));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = shot_alt("DEV01.RD.00%");
+        assert_eq!(ls, Ok(("%", vec!["DEV01", "RD", "00"])));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = shot_alt("DEV01.RD.0_001");
+        assert_eq!(ls, Ok(("_001", vec!["DEV01", "RD", "0"])));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = shot_alt("DEV01.RS.%");
+        assert_eq!(ls, Ok(("", vec!["DEV01", "RS", "%"])));
+    }
+}
+
+//-----------------------//
+//       seq_alt         //
+//-----------------------//
 // the sequence alternative has a show and a sequence
 // separated by a period, accumulated into a vector
 #[inline]
@@ -470,6 +575,10 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+
+//--------------------//
+//    rel_seq_alt     //
+//--------------------//
 // the sequence alternative has a show and a sequence
 // separated by a period, accumulated into a vector
 #[inline]
@@ -490,6 +599,10 @@ fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+
+//---------------------//
+//   rel_seq_rel_alt   //
+//---------------------//
 #[inline]
 // EG .RD.
 fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
@@ -507,6 +620,10 @@ fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+
+//----------------------//
+//   rel_seq_shot_alt   //
+//----------------------//
 #[inline]
 // EG .RD.0001
 fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
@@ -523,6 +640,11 @@ fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     )
     (input)
 }
+
+
+//------------------------//
+//    show_seq_rel_alt    //
+//------------------------//
 #[inline]
 // EG DEV01.RD.
 fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
@@ -539,6 +661,11 @@ fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
     )
     (input)
 }
+
+
+//----------------------//
+//    rel_shot_alt      //
+//----------------------//
 #[inline]
 // EG ..0001
 fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
@@ -555,6 +682,10 @@ fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+
+//-----------------------//
+//       show_alt        //
+//-----------------------//
 #[inline]
 // EG DEV01
 fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
@@ -569,6 +700,10 @@ fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+
+//------------------------//
+//       levelparser      //
+//------------------------//
 fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
     let (leftover, result) = all_consuming(
         alt(( // order is critical fyi
@@ -709,36 +844,39 @@ mod levelspec {
             assert_eq!(ls, Ok(vec!["DEV01","%"]))
         }
     }
- mod rel_seq {
-    use super::*;
-    #[test]
-    fn can_parse_rel_shot() {
-        let ls = rel_shot_alt("..0001");
-        assert_eq!(ls, Ok(("",vec!["", "", "0001"])))
-    }  
+    mod rel_seq {
+        use super::*;
 
-    #[test]
-    fn can_parse_rel_seq() {
-        let ls = rel_seq_alt(".RD");
-        assert_eq!(ls, Ok(("",vec!["", "RD"])))
-    }  
+        #[test]
+        fn can_parse_rel_shot() {
+            let ls = rel_shot_alt("..0001");
+            assert_eq!(ls, Ok(("",vec!["", "", "0001"])))
+        }  
 
-    #[test]
-    fn can_parse_rel_seq_shot() {
-        let ls = levelspec_parser(".RD.0001");
-        assert_eq!(ls, Ok(vec!["", "RD", "0001"]))
+        #[test]
+        fn can_parse_rel_seq() {
+            let ls = rel_seq_alt(".RD");
+            assert_eq!(ls, Ok(("",vec!["", "RD"])))
+        }  
+
+        #[test]
+        fn can_parse_rel_seq_shot() {
+            let ls = levelspec_parser(".RD.0001");
+            assert_eq!(ls, Ok(vec!["", "RD", "0001"]))
+        }
+        
+        #[test]
+        fn can_parse_show_seq_rel() {
+            let ls = levelspec_parser("DEV01.RD.");
+            assert_eq!(ls, Ok(vec!["DEV01", "RD", ""]))
+        }
+
+        #[test]
+        fn can_parse_rel_seq_alt() {
+            let ls = levelspec_parser(".RD.");
+            assert_eq!(ls, Ok(vec!["", "RD", ""]))
+        }
     }
- #[test]
-    fn can_parse_show_seq_rel() {
-        let ls = levelspec_parser("DEV01.RD.");
-        assert_eq!(ls, Ok(vec!["DEV01", "RD", ""]))
-    }
-    #[test]
-    fn can_parse_rel_seq_alt() {
-        let ls = levelspec_parser(".RD.");
-        assert_eq!(ls, Ok(vec!["", "RD", ""]))
-    }
- }
     mod shot {
         use super::*;
     
