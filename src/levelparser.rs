@@ -1092,6 +1092,42 @@ fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+#[cfg(test)]
+mod rel_shot_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = rel_shot_alt("..0001");
+        assert_eq!(ls, Ok(("",vec!["", "", "0001"])));
+    }
+
+
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = rel_shot_alt("..00 01");
+        assert_eq!(ls, Ok((" 01",vec!["", "", "00"])));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = rel_shot_alt("..0%01");
+        assert_eq!(ls, Ok(("%01",vec!["", "", "0"])));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = rel_shot_alt("..00_01");
+        assert_eq!(ls, Ok(("_01",vec!["", "", "00"])));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = rel_shot_alt("..%");
+        assert_eq!(ls, Ok(("",vec!["","", "%"])));
+    }
+}
 
 //------------------------//
 //       levelparser      //
