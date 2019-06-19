@@ -30,7 +30,7 @@ impl LevelSpec {
     /// # Example
     /// 
     /// ```
-    /// use levelspecter::{LevelSpec, LSE};
+    /// use levelspecter::{LevelSpec};
     /// 
     /// let result = LevelSpec::new("DEV01.RD.0001");
     /// let expected = LevelSpec::from_shot("DEV01", "RD", "0001");
