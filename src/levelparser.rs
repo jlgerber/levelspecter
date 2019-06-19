@@ -4,7 +4,7 @@ use nom::{
     Err as NomErr,
     error::ErrorKind,
     branch::alt,
-    combinator::{all_consuming},
+    combinator::{all_consuming, map},
     bytes::complete::{tag, tag_no_case},
     character::complete::digit1,
     sequence::{tuple, preceded, terminated },
@@ -188,10 +188,10 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     // is order dependent i would surmise. i should probably 
     // remove the % as w dont want to match against asssetdev shots 
     // if the sequence is unknown
-    alt((
-        preceded(tag("."),tag("ASSETDEV")),
-        preceded(tag("."), tag("%"))
-    ))
+    //alt((
+        preceded(tag("."),tag("ASSETDEV"))//,
+        //preceded(tag("."), tag("%"))
+    //))
     (input)
 }
 
@@ -220,13 +220,14 @@ mod parse_assetdev_seq_case_sensitive {
         assert_eq!(ls, Err(NomErr::Error(("RD", ErrorKind::Tag))))
     }  
 
+/*
     #[test]
    #[cfg(not(feature = "case-insensitive"))]
     fn can_parse_wildcard() {
         let ls = parse_assetdev_seq(".%");
         assert_eq!(ls, Ok(("","%")))
     }  
-    
+    */
 }
 
 
@@ -478,8 +479,8 @@ mod parse_rel_shot {
 fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         alt((
+            tuple((parse_show, parse_assetdev_seq, parse_assetdev_shot)),
             tuple((parse_show, parse_seq, parse_shot)),
-            tuple((parse_show, parse_assetdev_seq, parse_assetdev_shot))
         )),
         Vec::with_capacity(3), 
         |mut acc: Vec<_>, item| {
@@ -513,14 +514,14 @@ mod shot_alt {
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = shot_alt("dev01.assetdev.foobar");
-        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Many1))));
+        assert_eq!(ls, Ok(("", vec!["dev01", "assetdev", "foobar"])));
     }
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
     fn cannot_parse_assetdev_lowercase() {
         let ls = shot_alt("dev01.assetdev.foobar");
-        assert_eq!(ls, Ok(("",vec!["dev01", "assetdev", "foobar"])));
+        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Many1))));
     }
 
     #[test]
@@ -644,6 +645,72 @@ mod seq_alt {
 }
 
 
+//-----------------------//
+//       show_alt        //
+//-----------------------//
+#[inline]
+// EG DEV01
+fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    // unlike the other levels, we cannot keep parsing until we are done, as 
+    // 
+    map(parse_show, |item| { 
+            let mut acc = Vec::new();
+            acc.push(item); 
+            acc
+        } 
+    )
+    (input)
+}
+
+
+#[cfg(test)]
+mod show_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = show_alt("DEV01");
+        assert_eq!(ls, Ok(("",vec!["DEV01"])));
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_lowercase() {
+        let ls = show_alt("dev01");
+        assert_eq!(ls, Ok(("", vec!["dev01"])));
+    }
+
+    #[test]
+    fn cannot_start_with_number() {
+        let ls = show_alt("1DEV01");
+        assert_eq!(ls, Err(NomErr::Error(("1DEV01", ErrorKind::Tag))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = show_alt("DEV 01");
+        assert_eq!(ls, Ok((" 01", vec!["DEV"])));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = show_alt("DEV01%");
+        assert_eq!(ls, Ok(("%", vec!["DEV01"])));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = show_alt("DEV01_D");
+        assert_eq!(ls, Ok(("_D", vec!["DEV01"])));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = show_alt("%");
+        assert_eq!(ls, Ok(("",vec!["%"])));
+    }
+}
+
 //--------------------//
 //    rel_seq_alt     //
 //--------------------//
@@ -750,23 +817,6 @@ fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
-
-//-----------------------//
-//       show_alt        //
-//-----------------------//
-#[inline]
-// EG DEV01
-fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to place into a vector
-        parse_show, 
-        Vec::with_capacity(1), 
-        |mut acc: Vec<_>, item| { 
-            acc.push(item); 
-            acc
-        } 
-    )
-    (input)
-}
 
 
 //------------------------//
