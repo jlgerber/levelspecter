@@ -278,7 +278,7 @@ mod parse_assetdev_shot {
 fn parse_rel_seq(input: &str) -> IResult<&str, &str> {
      alt((
         preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum_alpha} else {alpha_alphanum_upper_alpha}),
-        preceded(tag("."), tag("%"))
+        preceded(tag("."), tag("%")),
      ))
     (input)
 }
@@ -722,7 +722,7 @@ fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     map( //used to turn the tuple into a vector
         alt((
             parse_rel_assetdev_seq,
-            parse_rel_seq
+            parse_rel_seq,
         )),
         |item| {
             let mut acc = Vec::with_capacity(2);
@@ -734,6 +734,74 @@ fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     (input)
 }
 
+
+#[cfg(test)]
+mod rel_seq_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = rel_seq_alt(".RD");
+        assert_eq!(ls, Ok(("",vec!["", "RD"])));
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_lowercase() {
+        let ls = rel_seq_alt(".rd");
+        assert_eq!(ls, Ok(("", vec!["", "rd"])));
+    }
+
+    #[test]
+    fn can_parse_assetdev() {
+        let ls = rel_seq_alt(".ASSETDEV");
+        assert_eq!(ls, Ok(("", vec!["", "ASSETDEV"])))
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = rel_seq_alt(".assetdev");
+        assert_eq!(ls, Ok(("", vec!["", "assetdev"])))
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = rel_seq_alt(".assetdev");
+        assert_eq!(ls, Err(NomErr::Error(("assetdev", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn cannot_start_with_number() {
+        let ls = rel_seq_alt(".1D");
+        assert_eq!(ls, Err(NomErr::Error(("1D", ErrorKind::Tag))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = rel_seq_alt(".R D");
+        assert_eq!(ls, Ok((" D", vec!["", "R"])));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = rel_seq_alt(".R%");
+        assert_eq!(ls, Ok(("%", vec!["", "R"])));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = rel_seq_alt(".R_D");
+        assert_eq!(ls, Ok(("_D", vec!["", "R"])));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = rel_seq_alt(".%");
+        assert_eq!(ls, Ok(("",vec!["","%"])));
+    }
+}
 
 //---------------------//
 //   rel_seq_rel_alt   //
@@ -753,6 +821,74 @@ fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
         } 
     )
     (input)
+}
+
+#[cfg(test)]
+mod rel_seq_rel_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = rel_seq_rel_alt(".RD.");
+        assert_eq!(ls, Ok(("",vec!["", "RD", ""])));
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_lowercase() {
+        let ls = rel_seq_rel_alt(".rd.");
+        assert_eq!(ls, Ok(("", vec!["", "rd", ""])));
+    }
+
+    #[test]
+    fn can_parse_assetdev() {
+        let ls = rel_seq_rel_alt(".ASSETDEV.");
+        assert_eq!(ls, Ok(("", vec!["", "ASSETDEV", ""])))
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = rel_seq_rel_alt(".assetdev.");
+        assert_eq!(ls, Ok(("", vec!["", "assetdev", ""])))
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = rel_seq_rel_alt(".assetdev.");
+        assert_eq!(ls, Err(NomErr::Error((".assetdev.", ErrorKind::Many1))));
+    }
+
+    #[test]
+    fn cannot_start_with_number() {
+        let ls = rel_seq_rel_alt(".1D.");
+        assert_eq!(ls, Err(NomErr::Error((".1D.", ErrorKind::Many1))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = rel_seq_rel_alt(".R D.");
+        assert_eq!(ls,Err(NomErr::Error((".R D.", ErrorKind::Many1))));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = rel_seq_rel_alt(".R%.");
+        assert_eq!(ls, Err(NomErr::Error((".R%.", ErrorKind::Many1))));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = rel_seq_rel_alt(".R_D.");
+        assert_eq!(ls, Err(NomErr::Error((".R_D.", ErrorKind::Many1))));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = rel_seq_rel_alt(".%.");
+        assert_eq!(ls, Ok(("",vec!["","%", ""])));
+    }
 }
 
 
