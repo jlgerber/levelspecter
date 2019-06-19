@@ -1,6 +1,8 @@
 #![allow(unused_imports)]
 use nom::{
     IResult,
+    Err as NomErr,
+    error::ErrorKind,
     branch::alt,
     combinator::{all_consuming},
     bytes::complete::{tag, tag_no_case},
@@ -8,7 +10,6 @@ use nom::{
     sequence::{tuple, preceded, terminated },
     multi::{ fold_many1},
 };
-
 use crate::LevelSpecterError;
 use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum, alpha_alphanum_upper_alpha, alpha_alphanum_alpha};
 
@@ -45,6 +46,7 @@ pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
     }
 }
 
+
 #[inline]
 fn parse_show(input: &str) -> IResult<&str, &str> {
     alt((
@@ -52,6 +54,25 @@ fn parse_show(input: &str) -> IResult<&str, &str> {
         tag("%")
     ))
     (input)
+}
+
+#[cfg(test)]
+mod parse_show {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_show() {
+        let ls = parse_show("dev01");
+        assert_eq!(ls, Ok(("","dev01")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_show() {
+        let ls = rel_shot_alt("dev01");
+        assert_eq!(ls, Err(NomErr::Error(("dev01", ErrorKind::Many1))))
+    }  
 }
 
 #[inline]
@@ -63,6 +84,25 @@ fn parse_seq(input: &str) -> IResult<&str, &str> {
     (input)
 }
 
+#[cfg(test)]
+mod parse_seq {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_seq() {
+        let ls = parse_seq(".rd");
+        assert_eq!(ls, Ok(("", "rd")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_seq() {
+        let ls = rel_shot_alt(".rd");
+        assert_eq!(ls, Err(NomErr::Error((".rd", ErrorKind::Many1))))
+    }  
+}
+
 #[inline]
 fn parse_shot(input: &str) -> IResult<&str, &str> {
     alt((
@@ -72,7 +112,18 @@ fn parse_shot(input: &str) -> IResult<&str, &str> {
     (input)
 }
 
-// NOTE: if I decide to go case insensitive, there is tag_no_case()
+#[cfg(test)]
+mod parse_shot {
+    use super::*;
+
+    #[test]
+    fn can_parse_shot() {
+        let ls = parse_shot(".0001");
+        assert_eq!(ls, Ok(("", "0001")))
+    }
+}
+
+
 #[inline]
 #[cfg(feature = "case-insensitive")]
 fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
@@ -82,16 +133,85 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     ))
     (input)
 }
-// NOTE: if I decide to go case insensitive, there is tag_no_case()
+
+#[cfg(test)]
+mod parse_assetdev_seq_case_insensitive {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_assetdev() {
+        let ls = parse_assetdev_seq(".assetdev");
+        assert_eq!(ls, Ok(("","assetdev")))
+    }  
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_assetdev_capital() {
+        let ls = parse_assetdev_seq(".ASSETDEV");
+        assert_eq!(ls, Ok(("","ASSETDEV")))
+    }  
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_wildcard() {
+        let ls = parse_assetdev_seq(".%");
+        assert_eq!(ls, Ok(("","%")))
+    }  
+    
+}
+
+// parse the assetdev sequence
 #[inline]
 #[cfg(not(feature = "case-insensitive"))]
 fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
+    // TODO: this may be a problem as we are not backtracking
+    // if .% is matched here, will that limit shots that are
+    // matched afterwards to the assetdev_shot?. probably. this
+    // is order dependent i would surmise. i should probably 
+    // remove the % as w dont want to match against asssetdev shots 
+    // if the sequence is unknown
     alt((
         preceded(tag("."),tag("ASSETDEV")),
         preceded(tag("."), tag("%"))
     ))
     (input)
 }
+
+#[cfg(test)]
+mod parse_assetdev_seq_case_sensitive {
+    use super::*;
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_assetdev_lower() {
+        let ls = parse_assetdev_seq(".assetdev");
+        assert_eq!(ls, Err(NomErr::Error(("assetdev", ErrorKind::Tag))))
+    }  
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_assetdev_capital() {
+        let ls = parse_assetdev_seq(".ASSETDEV");
+        assert_eq!(ls, Ok(("","ASSETDEV")))
+    }  
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_seq_other_than_assetdev() {
+        let ls = parse_assetdev_seq(".RD");
+        assert_eq!(ls, Err(NomErr::Error(("RD", ErrorKind::Tag))))
+    }  
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_wildcard() {
+        let ls = parse_assetdev_seq(".%");
+        assert_eq!(ls, Ok(("","%")))
+    }  
+    
+}
+
 
 #[inline]
 fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
@@ -102,21 +222,218 @@ fn parse_assetdev_shot(input: &str) -> IResult<&str, &str> {
     (input)
 }
 
-// TODO: support relative levelspec (eg  .AA or ..0001 or .AA. )
-// rel_seq tuple((parse_seq))
-fn parse_rel_seq(input: &str) -> IResult<&str, &str> {
-    preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum_alpha} else {alpha_alphanum_upper_alpha})(input)
+#[cfg(test)]
+mod parse_assetdev_shot {
+    use super::*;
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_assetdev_shot_lower() {
+        let ls = parse_assetdev_shot(".foobar");
+        assert_eq!(ls, Err(NomErr::Error(("foobar", ErrorKind::Tag))))
+    }  
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_assetdev_shot_capital() {
+        let ls = parse_assetdev_shot(".FOOBAR");
+        assert_eq!(ls, Ok(("","FOOBAR")))
+    }  
+
+    #[test]
+   #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_wildcard() {
+        let ls = parse_assetdev_shot(".%");
+        assert_eq!(ls, Ok(("","%")))
+    }  
 }
 
 
-// rel_seqshot tuple((terminated(parse_seq,tag("."))))
-fn parse_rel_seqshot(input: &str) -> IResult<&str, &str> {
-    terminated(parse_rel_seq, tag("."))(input)
+// parse relative sequence. 
+// EG .RD or .%
+fn parse_rel_seq(input: &str) -> IResult<&str, &str> {
+     alt((
+        preceded(tag("."), if cfg!(feature = "case-insensitive") {alpha_alphanum_alpha} else {alpha_alphanum_upper_alpha}),
+        preceded(tag("."), tag("%"))
+     ))
+    (input)
+}
+
+#[cfg(test)]
+mod parse_rel_seq {
+    use super::*;
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_relseq_lower() {
+        let ls = parse_rel_seq(".rd");
+        assert_eq!(ls, Err(NomErr::Error(("rd", ErrorKind::Tag))))
+    }  
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_relseq_lower() {
+        let ls = parse_rel_seq(".rd");
+        assert_eq!(ls, Ok(("","rd")))
+    }  
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_seq_capital() {
+        let ls = parse_rel_seq(".RD");
+        assert_eq!(ls, Ok(("","RD")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_wildcard() {
+        let ls = parse_rel_seq(".%");
+        assert_eq!(ls, Ok(("","%")))
+    }  
+}
+
+
+// parse relative assetdev sequence, case sensitive version
+// EG .ASSETDEV
+#[inline]
+#[cfg(not(feature = "case-insensitive"))]
+fn parse_rel_assetdev_seq(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), tag("ASSETDEV"))
+    (input)
+}
+
+// parse relative assetdev sequence, case insensitive version
+// EG .assetdev or .ASSETDEV
+#[inline]
+#[cfg(feature = "case-insensitive")]
+fn parse_rel_assetdev_seq(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), tag_no_case("assetdev"))
+    (input)
+}
+
+#[cfg(test)]
+mod parse_rel_assetdev_seq {
+    use super::*;
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_relseq_lower() {
+        let ls = parse_rel_assetdev_seq(".assetdev");
+        assert_eq!(ls, Err(NomErr::Error(("assetdev", ErrorKind::Tag))))
+    }  
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_relseq_lower() {
+        let ls = parse_rel_assetdev_seq(".assetdev");
+        assert_eq!(ls, Ok(("","assetdev")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_seq_capital() {
+        let ls = parse_rel_assetdev_seq(".ASSETDEV");
+        assert_eq!(ls, Ok(("","ASSETDEV")))
+    }  
+
+}
+
+
+// parse relative sequence with trailing relative 
+// EG .RD.
+#[inline]
+fn parse_rel_seq_rel(input: &str) -> IResult<&str, &str> {
+    terminated( 
+        alt((
+            parse_rel_assetdev_seq, 
+            parse_rel_seq
+        )), 
+        tag(".")
+    )
+    (input)
+}
+
+#[cfg(test)]
+mod parse_rel_seq_rel {
+    use super::*;
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_relseq_lower() {
+        let ls = parse_rel_seq_rel(".rd.");
+        assert_eq!(ls, Err(NomErr::Error(("rd.", ErrorKind::Tag))))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn cannot_parse_relseq_assetdev_lower() {
+        let ls = parse_rel_seq_rel(".assetdev.");
+        assert_eq!(ls, Err(NomErr::Error(("assetdev.", ErrorKind::Tag))))
+    }  
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_relseq_lower() {
+        let ls = parse_rel_seq_rel(".rd.");
+        assert_eq!(ls, Ok(("","rd")))
+    }  
+
+    #[test]
+    #[cfg(feature = "case-insensitive")]
+    fn can_parse_relseq_assetdev_lower() {
+        let ls = parse_rel_seq_rel(".assetdev.");
+        assert_eq!(ls, Ok(("","assetdev")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_seq_capital() {
+        let ls = parse_rel_seq_rel(".RD.");
+        assert_eq!(ls, Ok(("","RD")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_seq_assetdev_capital() {
+        let ls = parse_rel_seq_rel(".ASSETDEV.");
+        assert_eq!(ls, Ok(("","ASSETDEV")))
+    }  
+
+    #[test]
+    #[cfg(not(feature = "case-insensitive"))]
+    fn can_parse_wildcard() {
+        let ls = parse_rel_seq_rel(".%.");
+        assert_eq!(ls, Ok(("","%")))
+    }  
+}
+
+// parse relative shot
+// EG ..0001
+#[inline]
+fn parse_rel_shot(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), parse_shot )(input)
+}
+
+#[cfg(test)]
+mod parse_rel_shot {
+    use super::*;
+
+    #[test]
+    fn can_parse_relshot_lower() {
+        let ls = parse_rel_shot("..0001");
+        assert_eq!(ls, Ok(("","0001")))
+    }  
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = parse_rel_shot("..%");
+        assert_eq!(ls, Ok(("","%")))
+    }  
 }
 
 // The shot alternative, has a show a sequence, and a shot
 // accumulated into a vector. 
 #[inline]
+// EG DEV01.RD.0001
 fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         alt((
@@ -138,6 +455,7 @@ fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
 // the sequence alternative has a show and a sequence
 // separated by a period, accumulated into a vector
 #[inline]
+// EG DEV01.RD
 fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         tuple((parse_show, parse_seq)),
@@ -155,10 +473,13 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
 // the sequence alternative has a show and a sequence
 // separated by a period, accumulated into a vector
 #[inline]
-// .seq
+// .RD
 fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
-        parse_rel_seq,
+        alt((
+            parse_rel_assetdev_seq,
+            parse_rel_seq
+        )),
         Vec::with_capacity(2), 
         |mut acc: Vec<_>, item| {
             acc.push(""); 
@@ -170,11 +491,11 @@ fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
 }
 
 #[inline]
-// .seq.
+// EG .RD.
 fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         //terminated(parse_rel_seq, tag(".")),
-        parse_rel_seqshot,
+        parse_rel_seq_rel,
         Vec::with_capacity(3), 
         |mut acc: Vec<_>, item| {
             acc.push(""); 
@@ -187,7 +508,7 @@ fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
 }
 
 #[inline]
-// .seq.
+// EG .RD.0001
 fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to turn the tuple into a vector
         tuple((parse_rel_seq, parse_shot)),
@@ -202,8 +523,40 @@ fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     )
     (input)
 }
+#[inline]
+// EG DEV01.RD.
+fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1( //used to turn the tuple into a vector
+        tuple((parse_show, terminated(parse_seq, tag(".")))),
+        Vec::with_capacity(3), 
+        |mut acc: Vec<_>, item| {
+            let (show, seq) = item;
+            acc.push(show);
+            acc.push(seq); 
+            acc.push(""); 
+            acc
+        } 
+    )
+    (input)
+}
+#[inline]
+// EG ..0001
+fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    fold_many1( //used to place into a vector
+        parse_rel_shot, 
+        Vec::with_capacity(3), 
+        |mut acc: Vec<_>, item| { 
+            acc.push("");
+            acc.push("");
+            acc.push(item); 
+            acc
+        } 
+    )
+    (input)
+}
 
 #[inline]
+// EG DEV01
 fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
     fold_many1( //used to place into a vector
         parse_show, 
@@ -218,11 +571,13 @@ fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
 
 fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
     let (leftover, result) = all_consuming(
-        alt((
+        alt(( // order is critical fyi
+            rel_shot_alt,
             rel_seq_shot_alt,
             rel_seq_rel_alt,
             rel_seq_alt,
             shot_alt,
+            show_seq_rel_alt,
             seq_alt,
             show_alt,
         )))
@@ -356,7 +711,12 @@ mod levelspec {
     }
  mod rel_seq {
     use super::*;
-    
+    #[test]
+    fn can_parse_rel_shot() {
+        let ls = rel_shot_alt("..0001");
+        assert_eq!(ls, Ok(("",vec!["", "", "0001"])))
+    }  
+
     #[test]
     fn can_parse_rel_seq() {
         let ls = rel_seq_alt(".RD");
@@ -368,7 +728,11 @@ mod levelspec {
         let ls = levelspec_parser(".RD.0001");
         assert_eq!(ls, Ok(vec!["", "RD", "0001"]))
     }
-
+ #[test]
+    fn can_parse_show_seq_rel() {
+        let ls = levelspec_parser("DEV01.RD.");
+        assert_eq!(ls, Ok(vec!["DEV01", "RD", ""]))
+    }
     #[test]
     fn can_parse_rel_seq_alt() {
         let ls = levelspec_parser(".RD.");
@@ -437,7 +801,7 @@ mod levelspec {
 }
 
 #[cfg(test)]
-mod atoms {
+mod parse_level {
     use super::*;
 
     #[test]
