@@ -899,7 +899,10 @@ mod rel_seq_rel_alt {
 // EG .RD.0001
 fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     map( //used to turn the tuple into a vector
-        tuple((parse_rel_seq, parse_shot)),
+        alt((
+            tuple((parse_rel_seq, parse_shot)),
+            tuple((parse_rel_assetdev_seq, parse_assetdev_shot))
+        )),
         |item| {
             let (seq, shot) = item;
             let mut acc = Vec::with_capacity(3);
@@ -910,6 +913,74 @@ fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
         } 
     )
     (input)
+}
+
+#[cfg(test)]
+mod rel_seq_shot_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = rel_seq_shot_alt(".RD.0001");
+        assert_eq!(ls, Ok(("",vec!["", "RD", "0001"])));
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_lowercase() {
+        let ls = rel_seq_shot_alt(".rd.0001");
+        assert_eq!(ls, Ok(("", vec!["", "rd", "0001"])));
+    }
+
+    #[test]
+    fn can_parse_assetdev() {
+        let ls = rel_seq_shot_alt(".ASSETDEV.FOO");
+        assert_eq!(ls, Ok(("", vec!["", "ASSETDEV", "FOO"])))
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = rel_seq_shot_alt(".assetdev.foo");
+        assert_eq!(ls, Ok(("", vec!["", "assetdev", "foo"])))
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = rel_seq_shot_alt(".assetdev.foo");
+        assert_eq!(ls, Err(NomErr::Error(("assetdev.foo", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn cannot_start_with_number() {
+        let ls = rel_seq_shot_alt(".1D.0001");
+        assert_eq!(ls, Err(NomErr::Error(("1D.0001", ErrorKind::Tag))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = rel_seq_shot_alt(".R D.0001");
+        assert_eq!(ls,Err(NomErr::Error(("R D.0001", ErrorKind::Tag))));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = rel_seq_shot_alt(".R%.0001");
+        assert_eq!(ls, Err(NomErr::Error(("R%.0001", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = rel_seq_shot_alt(".R_D.0001");
+        assert_eq!(ls, Err(NomErr::Error(("R_D.0001", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = rel_seq_shot_alt(".%.0001");
+        assert_eq!(ls, Ok(("",vec!["","%", "0001"])));
+    }
 }
 
 
