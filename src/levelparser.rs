@@ -477,14 +477,14 @@ mod parse_rel_shot {
 #[inline]
 // EG DEV01.RD.0001
 fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to turn the tuple into a vector
+    map( //used to turn the tuple into a vector
         alt((
             tuple((parse_show, parse_assetdev_seq, parse_assetdev_shot)),
             tuple((parse_show, parse_seq, parse_shot)),
         )),
-        Vec::with_capacity(3), 
-        |mut acc: Vec<_>, item| {
+        |item| {
             let (show, seq, shot) = item;
+            let mut acc = Vec::with_capacity(3);
             acc.push(show); 
             acc.push(seq); 
             acc.push(shot);
@@ -521,13 +521,13 @@ mod shot_alt {
     #[test]
     fn cannot_parse_assetdev_lowercase() {
         let ls = shot_alt("dev01.assetdev.foobar");
-        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Many1))));
+        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Tag))));
     }
 
     #[test]
     fn cannot_start_with_letter() {
         let ls = shot_alt("DEV01.RD.R0001");
-        assert_eq!(ls, Err(NomErr::Error(("DEV01.RD.R0001", ErrorKind::Many1))));
+        assert_eq!(ls, Err(NomErr::Error(("R0001", ErrorKind::Tag))));
     }
     
     #[test]
