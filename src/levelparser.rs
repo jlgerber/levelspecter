@@ -513,14 +513,14 @@ mod shot_alt {
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = shot_alt("dev01.assetdev.foobar");
-        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Many1))))
+        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev.foobar", ErrorKind::Many1))));
     }
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
     fn cannot_parse_assetdev_lowercase() {
         let ls = shot_alt("dev01.assetdev.foobar");
-        assert_eq!(ls, Ok(("",vec!["dev01", "assetdev", "foobar"])))
+        assert_eq!(ls, Ok(("",vec!["dev01", "assetdev", "foobar"])));
     }
 
     #[test]
@@ -573,6 +573,74 @@ fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
         } 
     )
     (input)
+}
+
+#[cfg(test)]
+mod seq_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = seq_alt("DEV01.RD");
+        assert_eq!(ls, Ok(("",vec!["DEV01", "RD"])));
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_lowercase() {
+        let ls = seq_alt("dev01.rd");
+        assert_eq!(ls, Ok(("", vec!["dev01", "rd"])));
+    }
+
+    #[test]
+    fn can_parse_assetdev() {
+        let ls = seq_alt("DEV01.ASSETDEV");
+        assert_eq!(ls, Ok(("", vec!["DEV01", "ASSETDEV"])))
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = seq_alt("dev01.assetdev");
+        assert_eq!(ls, Ok(("", vec!["dev01", "assetdev"])))
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = seq_alt("dev01.assetdev");
+        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev", ErrorKind::Many1))));
+    }
+
+    #[test]
+    fn cannot_start_with_number() {
+        let ls = seq_alt("DEV01.1D");
+        assert_eq!(ls, Err(NomErr::Error(("DEV01.1D", ErrorKind::Many1))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = seq_alt("DEV01.R D");
+        assert_eq!(ls, Ok((" D", vec!["DEV01", "R"])));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = seq_alt("DEV01.R%");
+        assert_eq!(ls, Ok(("%", vec!["DEV01", "R"])));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = seq_alt("DEV01.R_D");
+        assert_eq!(ls, Ok(("_D", vec!["DEV01", "R"])));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = seq_alt("DEV01.%");
+        assert_eq!(ls, Ok(("",vec!["DEV01","%"])));
+    }
 }
 
 
