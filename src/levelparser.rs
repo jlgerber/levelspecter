@@ -73,7 +73,7 @@ mod parse_show {
     #[cfg(not(feature = "case-insensitive"))]
     fn can_parse_show() {
         let ls = rel_shot_alt("dev01");
-        assert_eq!(ls, Err(NomErr::Error(("dev01", ErrorKind::Many1))))
+        assert_eq!(ls, Err(NomErr::Error(("dev01", ErrorKind::Tag))))
     }  
 }
 
@@ -105,7 +105,7 @@ mod parse_seq {
     #[cfg(not(feature = "case-insensitive"))]
     fn can_parse_seq() {
         let ls = rel_shot_alt(".rd");
-        assert_eq!(ls, Err(NomErr::Error((".rd", ErrorKind::Many1))))
+        assert_eq!(ls, Err(NomErr::Error(("rd", ErrorKind::Tag))))
     }  
 }
 
@@ -719,13 +719,13 @@ mod show_alt {
 #[inline]
 // .RD
 fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to turn the tuple into a vector
+    map( //used to turn the tuple into a vector
         alt((
             parse_rel_assetdev_seq,
             parse_rel_seq
         )),
-        Vec::with_capacity(2), 
-        |mut acc: Vec<_>, item| {
+        |item| {
+            let mut acc = Vec::with_capacity(2);
             acc.push(""); 
             acc.push(item);
             acc
@@ -762,11 +762,11 @@ fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
 #[inline]
 // EG .RD.0001
 fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to turn the tuple into a vector
+    map( //used to turn the tuple into a vector
         tuple((parse_rel_seq, parse_shot)),
-        Vec::with_capacity(3), 
-        |mut acc: Vec<_>, item| {
+        |item| {
             let (seq, shot) = item;
+            let mut acc = Vec::with_capacity(3);
             acc.push(""); 
             acc.push(seq);
             acc.push(shot); 
@@ -783,11 +783,11 @@ fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
 #[inline]
 // EG DEV01.RD.
 fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to turn the tuple into a vector
-        tuple((parse_show, terminated(parse_seq, tag(".")))),
-        Vec::with_capacity(3), 
-        |mut acc: Vec<_>, item| {
+    map( //used to turn the tuple into a vector
+        tuple((parse_show, terminated(parse_seq, tag(".")))), 
+        |item| {
             let (show, seq) = item;
+            let mut acc = Vec::with_capacity(3);
             acc.push(show);
             acc.push(seq); 
             acc.push(""); 
@@ -804,10 +804,10 @@ fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
 #[inline]
 // EG ..0001
 fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to place into a vector
+    map( //used to place into a vector
         parse_rel_shot, 
-        Vec::with_capacity(3), 
-        |mut acc: Vec<_>, item| { 
+        | item| { 
+            let mut acc = Vec::with_capacity(3);
             acc.push("");
             acc.push("");
             acc.push(item); 
@@ -816,7 +816,6 @@ fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
     )
     (input)
 }
-
 
 
 //------------------------//
