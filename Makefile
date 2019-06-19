@@ -1,5 +1,6 @@
+
 build:
-	cargo build --release
+	cargo build --release --features case-insensitive
 
 install:
 	cp target/release/levelspecter ~/bin/.
@@ -10,3 +11,4 @@ all: build install
 .PHONY: test
 test:
 	cargo test --release
+	cargo test --release --features case-insensitive
