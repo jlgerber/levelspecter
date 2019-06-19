@@ -563,10 +563,10 @@ mod shot_alt {
 #[inline]
 // EG DEV01.RD
 fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
-    fold_many1( //used to turn the tuple into a vector
+    map(
         tuple((parse_show, parse_seq)),
-        Vec::with_capacity(2), 
-        |mut acc: Vec<_>, item| {
+        | item| {
+            let mut acc = Vec::with_capacity(2);
             let (show, seq) = item ;
             acc.push(show); 
             acc.push(seq);
@@ -610,13 +610,13 @@ mod seq_alt {
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = seq_alt("dev01.assetdev");
-        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev", ErrorKind::Many1))));
+        assert_eq!(ls, Err(NomErr::Error(("dev01.assetdev", ErrorKind::Tag))));
     }
 
     #[test]
     fn cannot_start_with_number() {
         let ls = seq_alt("DEV01.1D");
-        assert_eq!(ls, Err(NomErr::Error(("DEV01.1D", ErrorKind::Many1))));
+        assert_eq!(ls, Err(NomErr::Error(("1D", ErrorKind::Tag))));
     }
     
     #[test]
