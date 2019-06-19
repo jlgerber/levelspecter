@@ -1005,6 +1005,74 @@ fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
 }
 
 
+#[cfg(test)]
+mod show_seq_rel_alt {
+    use super::*;
+        
+    #[test]
+    fn can_parse() {
+        let ls = show_seq_rel_alt("DEV01.RD.");
+        assert_eq!(ls, Ok(("",vec!["DEV01", "RD", ""])));
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_lowercase() {
+        let ls = show_seq_rel_alt("dev.rd.");
+        assert_eq!(ls, Ok(("", vec!["dev", "rd", ""])));
+    }
+
+    #[test]
+    fn can_parse_assetdev() {
+        let ls = show_seq_rel_alt("DEV.ASSETDEV.");
+        assert_eq!(ls, Ok(("", vec!["DEV", "ASSETDEV", ""])))
+    }
+
+    #[cfg(feature = "case-insensitive")]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = show_seq_rel_alt("dev.assetdev.");
+        assert_eq!(ls, Ok(("", vec!["dev", "assetdev", ""])))
+    }
+
+    #[cfg(not(feature = "case-insensitive"))]
+    #[test]
+    fn can_parse_assetdev_lowercase() {
+        let ls = show_seq_rel_alt("dev.assetdev.");
+        assert_eq!(ls, Err(NomErr::Error(("dev.assetdev.", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn cannot_start_with_number() {
+        let ls = show_seq_rel_alt("DEV.1D.");
+        assert_eq!(ls, Err(NomErr::Error(("1D.", ErrorKind::Tag))));
+    }
+    
+    #[test]
+    fn cannot_have_space() {
+        let ls = show_seq_rel_alt("DEV.R D.");
+        assert_eq!(ls,Err(NomErr::Error((" D.", ErrorKind::Tag))));
+    }
+    
+    #[test]
+    fn cannot_have_wildcard_and_chars() {
+        let ls = show_seq_rel_alt("DEV.R%.");
+        assert_eq!(ls, Err(NomErr::Error(("%.", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn cannot_have_underscore() {
+        let ls = show_seq_rel_alt("DEV.R_D.");
+        assert_eq!(ls, Err(NomErr::Error(("_D.", ErrorKind::Tag))));
+    }
+
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = show_seq_rel_alt("DEV.%.");
+        assert_eq!(ls, Ok(("",vec!["DEV","%", ""])));
+    }
+}
+
 //----------------------//
 //    rel_shot_alt      //
 //----------------------//
