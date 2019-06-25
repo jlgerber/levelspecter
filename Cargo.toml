@@ -5,7 +5,7 @@ authors = ["jgerber"]
 edition = "2018"
 
 [dependencies]
-nom="5.0.0"
+nom="5.0.0-beta3"
 aschar-casesensitive = { git = "https://github.com/jlgerber/aschar-casesensitive.git" }
 failure = "0.1.5"
 
