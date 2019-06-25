@@ -5,7 +5,7 @@ name = "aschar-casesensitive"
 version = "0.2.0"
 source = "git+https://github.com/jlgerber/aschar-casesensitive.git#6d27c1c2370aee31ea69b457d50dedf7ca6c0151"
 dependencies = [
- "nom 5.0.0-beta2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nom 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -70,7 +70,7 @@ version = "0.9.0"
 dependencies = [
  "aschar-casesensitive 0.2.0 (git+https://github.com/jlgerber/aschar-casesensitive.git)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "nom 5.0.0-beta2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nom 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -96,7 +96,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "nom"
-version = "5.0.0-beta2"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "lexical-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -199,7 +199,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum lexical-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3e82e023e062f1d25f807ad182008fba1b46538e999f908a08cc0c29e084462e"
 "checksum libc 0.2.58 (registry+https://github.com/rust-lang/crates.io-index)" = "6281b86796ba5e4366000be6e9e18bf35580adf9e63fbe2294aadb587613a319"
 "checksum memchr 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2efc7bc57c883d4a4d6e3246905283d8dae951bb3bd32f49d6ef297f546e1c39"
-"checksum nom 5.0.0-beta2 (registry+https://github.com/rust-lang/crates.io-index)" = "cfa215de9f747c2b3290ceee185976eb6ffc936087e19d810b57ba3ff85ae28c"
+"checksum nom 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e9761d859320e381010a4f7f8ed425f2c924de33ad121ace447367c713ad561b"
 "checksum proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)" = "cf3d2011ab5c909338f7887f4fc896d35932e29146c12c8d01da6b22a80ba759"
 "checksum quote 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)" = "faf4799c5d274f3868a4aae320a0a182cbd2baee377b378f080e16a23e9d80db"
 "checksum rustc-demangle 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)" = "a7f4dccf6f4891ebcc0c39f9b6eb1a83b9bf5d747cb439ec6fba4f3b977038af"
