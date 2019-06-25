@@ -468,7 +468,58 @@ mod parse_rel_shot {
     }  
 }
 
+//----------------------//
+//  parse_show_rel_shot //
+//----------------------//
 
+// EG DEV01..
+fn parse_show_rel_shot(input: &str) -> IResult<&str, &str> {
+    terminated(parse_show, tag(".."))(input)
+}
+
+#[cfg(test)]
+mod parse_show_rel_shot {
+    use super::*;
+
+    #[test]
+    fn can_parse_show_relshot_lower() {
+        let ls = parse_show_rel_shot("DEV01..");
+        assert_eq!(ls, Ok(("","DEV01")))
+    }  
+
+    #[test]
+    fn can_show_parse_wildcard() {
+        let ls = parse_show_rel_shot("%..");
+        assert_eq!(ls, Ok(("","%")))
+    }  
+}
+
+
+//----------------------//
+//  parse_show_rel_seq //
+//----------------------//
+
+// EG DEV01..
+fn parse_show_rel_seq(input: &str) -> IResult<&str, &str> {
+    terminated(parse_show, tag("."))(input)
+}
+
+#[cfg(test)]
+mod parse_show_rel_seq {
+    use super::*;
+
+    #[test]
+    fn can_parse_show_relshot_lower() {
+        let ls = parse_show_rel_seq("DEV01.");
+        assert_eq!(ls, Ok(("","DEV01")))
+    }  
+
+    #[test]
+    fn can_parse_show_rel_seq_wildcard() {
+        let ls = parse_show_rel_seq("%.");
+        assert_eq!(ls, Ok(("","%")))
+    }  
+}
 //----------------------//
 //       shot_alt       //
 //----------------------// 
