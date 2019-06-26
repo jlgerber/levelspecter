@@ -494,7 +494,6 @@ mod parse_show_rel_shot {
     }  
 }
 
-
 //----------------------//
 //  parse_show_rel_seq //
 //----------------------//
@@ -520,6 +519,7 @@ mod parse_show_rel_seq {
         assert_eq!(ls, Ok(("","%")))
     }  
 }
+
 //----------------------//
 //       shot_alt       //
 //----------------------// 
@@ -762,9 +762,87 @@ mod show_alt {
     }
 }
 
+//-----------------------//
+// show_rel_shot_alt     //
+//-----------------------//
+#[inline]
+// DEV01..
+fn show_rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    map( //used to turn the tuple into a vector
+        parse_show_rel_shot,
+        |item| {
+            let mut acc = Vec::with_capacity(2);
+            acc.push(item);
+            acc.push(""); 
+            acc.push(""); 
+            acc
+        } 
+    )
+    (input)
+}
+
+#[cfg(test)]
+mod show_rel_shot_alt {
+    use super::*;
+
+    #[test]
+    fn can_parse_show_rel_shot_lower() {
+        let ls = show_rel_shot_alt("DEV01..");
+        assert_eq!(ls, Ok(("",vec!["DEV01","",""])))
+    }  
+
+    #[test]
+    fn can_show_parse_wildcard() {
+        let ls = show_rel_shot_alt("%..");
+        assert_eq!(ls, Ok(("",vec!["%","",""])))
+    }  
+}
+
+//-----------------------//
+// show_rel_seq_alt      //
+//-----------------------//
+#[inline]
+// DEV01..
+fn show_rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
+    map( //used to turn the tuple into a vector
+        parse_show_rel_seq,
+        |item| {
+            let mut acc = Vec::with_capacity(2);
+            acc.push(item);
+            acc.push(""); 
+            acc
+        } 
+    )
+    (input)
+}
+
+
+#[cfg(test)]
+mod show_rel_seq_alt {
+    use super::*;
+
+    #[test]
+    fn can_parse_show_rel_seq_lower() {
+        let ls = show_rel_seq_alt("DEV01.");
+        assert_eq!(ls, Ok(("",vec!["DEV01",""])))
+    }  
+
+    #[test]
+    fn wont_parse_show_rel_shot_lower() {
+        let ls = show_rel_seq_alt("DEV01..");
+        assert_eq!(ls, Ok((".",vec!["DEV01",""])))
+    }  
+    #[test]
+    fn can_parse_wildcard() {
+        let ls = show_rel_seq_alt("%.");
+        assert_eq!(ls, Ok(("",vec!["%",""])))
+    }  
+}
+
 //--------------------//
 //    rel_seq_alt     //
 //--------------------//
+
 // the sequence alternative has a show and a sequence
 // separated by a period, accumulated into a vector
 #[inline]
@@ -1191,8 +1269,10 @@ fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
             rel_seq_rel_alt,
             rel_seq_alt,
             shot_alt,
+            show_rel_shot_alt,
             show_seq_rel_alt,
             seq_alt,
+            show_rel_seq_alt,
             show_alt,
         )))
      (input)?;
@@ -1207,6 +1287,20 @@ mod levelspec {
     mod show {
         use super::*;
             
+           
+        #[test]
+        fn can_parse_show_dot_dot() {
+            let ls = levelspec_parser("DEV01..");
+            assert_eq!(ls, Ok(vec!["DEV01","",""]))
+        }
+
+           
+        #[test]
+        fn can_parse_show_dot() {
+            let ls = levelspec_parser("DEV01.");
+            assert_eq!(ls, Ok(vec!["DEV01","" ]))
+        }
+
         #[test]
         fn can_parse() {
             let ls = levelspec_parser("DEV01");
