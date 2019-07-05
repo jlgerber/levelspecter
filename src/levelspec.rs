@@ -253,7 +253,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn can_replace_rel() {
+    fn can_replace_relative_shot_with_absolute() {
         let ls = LevelSpec::from_str("..0001").unwrap();
         let new_ls = ls.rel_to_abs(|level|{
             match level {
@@ -274,7 +274,7 @@ mod tests {
 
     #[cfg(feature = "case-insensitive")]
     #[test]
-    fn can_parse_show_lower() {
+    fn can_parse_show_with_lowercase_name() {
         let result = LevelSpec::from_str("dev01");
         let expect = Ok(LevelSpec {show: LevelType::from("dev01"), sequence: None, shot: None });
         assert_eq!(result, expect);
@@ -282,7 +282,7 @@ mod tests {
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
-    fn cannot_parse_show_lower() {
+    fn cannot_parse_show_with_lowercase_name() {
         let result = LevelSpec::from_str("dev01");
         assert_eq!(
             result, 
@@ -291,7 +291,7 @@ mod tests {
     }
 
     #[test]
-    fn can_parse_seq() {
+    fn can_parse_sequence() {
         let result = LevelSpec::from_str("DEV01.RD");
         let expect = Ok(LevelSpec { 
             show: LevelType::from("DEV01"), 
@@ -313,7 +313,7 @@ mod tests {
 
     #[cfg(feature = "case-insensitive")]
     #[test]
-    fn can_parse_shot_lower() {
+    fn can_parse_shot_with_lowercase_show_and_sequence() {
         let result = LevelSpec::from_str("dev01.rd.0001");
         let expect = Ok(LevelSpec {
             show: LevelType::from("dev01"), 
@@ -324,7 +324,7 @@ mod tests {
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
-    fn can_parse_shot_lower() {
+    fn cannot_parse_shot_with_lowercase_shot_and_sequence() {
         let result = LevelSpec::from_str("dev01.rd.0001");
         assert_eq!(
             result, 
@@ -336,7 +336,7 @@ mod tests {
 
     #[cfg(feature = "case-insensitive")]
     #[test]
-    fn can_upper_shot() {
+    fn will_convert_lowercase_to_uppercase_shot() {
         let result = LevelSpec::from_str("dev01.rd.0001").unwrap().upper();
         let expect = LevelSpec {
             show: LevelType::from("DEV01"), 
@@ -356,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn can_parse_seq_with_relative_show() {
+    fn can_parse_sequence_with_relative_show() {
         let result = LevelSpec::from_str(".RD");
         let expect = Ok(LevelSpec {
             show: LevelType::from(""), 
@@ -375,9 +375,8 @@ mod tests {
         assert_eq!(result, expect);
     }
 
-
     #[test]
-    fn can_parse_seq_with_relative_show_and_shot() {
+    fn can_parse_shot_with_relative_show_and_shot() {
         let result = LevelSpec::from_str(".RD.");
         let expect = Ok(LevelSpec {
             show: LevelType::from(""), 
@@ -387,25 +386,53 @@ mod tests {
     }
 
     #[test]
-    fn is_concrete_works() {
+    fn can_parse_shot_with_relative_show_and_sequence() {
+        let result = LevelSpec::from_str("..9999");
+        let expect = Ok(LevelSpec {
+            show: LevelType::from(""), 
+            sequence: Some(LevelType::from("")), 
+            shot: Some(LevelType::from("9999")) });
+        assert_eq!(result, expect);
+    }
+
+    #[test]
+    fn is_concrete_returns_true_for_shot_without_wildcard() {
         let level = LevelSpec::from_str("DEV01.RD.0001").unwrap();
         assert!(level.is_concrete());
     }
 
     #[test]
-    fn is_concrete_for_show_wildcard_works() {
+    fn is_concrete_returns_true_for_show_with_relative_show() {
+        let level = LevelSpec::from_str(".RD.0001").unwrap();
+        assert!(level.is_concrete());
+    }
+
+    #[test]
+    fn is_concrete_returns_true_for_show_with_relative_seq_and_show() {
+        let level = LevelSpec::from_str("..0001").unwrap();
+        assert!(level.is_concrete());
+    }
+
+    #[test] 
+    fn is_concrete_returns_true_for_show_with_relative_seq_and_shot() {
+        let level = LevelSpec::from_str("DEV01..").unwrap();
+        assert!(level.is_concrete());
+    }
+
+    #[test]
+    fn is_concrete_returns_false_for_show_with_wildcard() {
         let level = LevelSpec::from_str("%.RD.0001").unwrap();
         assert!(!level.is_concrete());
     }
 
     #[test]
-    fn is_concrete_for_seq_wildcard_works() {
+    fn is_concrete_returns_false_for_seq_with_wildcard() {
         let level = LevelSpec::from_str("DEV01.%.0001").unwrap();
         assert!(!level.is_concrete());
     }
 
     #[test]
-    fn is_concrete_for_shot_wildcard_works() {
+    fn is_concrete_returns_false_for_shot_with_wildcard() {
         let level = LevelSpec::from_str("DEV01.RD.%").unwrap();
         assert!(!level.is_concrete());
     }
@@ -413,7 +440,7 @@ mod tests {
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
-    fn can_new_up_shot() {
+    fn from_shot_instantiates_uppercase_levelspec_given_lowercase_inputs() {
         let result = LevelSpec::from_shot("dev01", "rd", "0001");
         assert_eq!(
             result, 
@@ -428,7 +455,7 @@ mod tests {
 
     #[cfg(feature = "case-insensitive")]
     #[test]
-    fn can_new_up_shot() {
+    fn from_shot_instantiates_levelspec_given_lowercase_inputs() {
         let result = LevelSpec::from_shot("dev01", "rd", "0001");
         assert_eq!(
             result, 
@@ -442,7 +469,7 @@ mod tests {
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
-    fn can_new_up_seq() {
+    fn from_sequence_instantiates_uppercase_levelspec_given_lowercase_inputs() {
         let result = LevelSpec::from_sequence("dev01", "rd");
         assert_eq!(
             result, 
@@ -456,7 +483,7 @@ mod tests {
 
     #[cfg(feature = "case-insensitive")]
     #[test]
-    fn can_new_up_seq() {
+    fn from_sequence_instantiates_new_levelspec_given_lowercase_inputs() {
         let result = LevelSpec::from_sequence("dev01", "rd");
         assert_eq!(
             result, 
@@ -470,7 +497,7 @@ mod tests {
 
     #[cfg(not(feature = "case-insensitive"))]
     #[test]
-    fn can_new_up_show() {
+    fn from_show_instantiates_uppercase_levelspec_given_lowercase_show() {
         let result = LevelSpec::from_show("dev01");
         assert_eq!(
             result, 
@@ -484,7 +511,7 @@ mod tests {
 
     #[cfg(feature = "case-insensitive")]
     #[test]
-    fn can_new_up_show() {
+    fn from_show_instantiates_levelspec_given_lowercase_show() {
         let result = LevelSpec::from_show("dev01");
         assert_eq!(
             result, 
