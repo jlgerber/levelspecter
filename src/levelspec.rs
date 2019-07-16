@@ -220,11 +220,22 @@ impl FromStr for LevelSpec {
     type Err = LSE;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let levels = levelspec_parser(s)?;
+        let mut levels = levelspec_parser(s)?;
         match levels.len() {
-            3 => Ok(LevelSpec::from_shot(levels[0], levels[1], levels[2])),
-            2 => Ok(LevelSpec::from_sequence(levels[0], levels[1])),
-            1 => Ok(LevelSpec::from_show(levels[0])),
+            3 => {
+                let shot = levels.pop();
+                let sequence = levels.pop();
+                let show = levels.pop().unwrap();
+                Ok(LevelSpec{show, sequence, shot})
+            },
+            2 => {
+                let sequence = levels.pop();
+                let show = levels.pop().unwrap();
+                Ok(LevelSpec{show, sequence, shot:None})
+            },
+            1 => {
+                Ok(LevelSpec{show:levels.pop().unwrap(), sequence:None, shot:None})
+            },
             _ => panic!("cannot create levelspec with more than 3 levels")
         }
     }
