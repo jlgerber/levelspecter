@@ -1,6 +1,6 @@
  
 pub mod levelparser;
-pub use levelparser::levelspec_parser;
+pub use levelparser::{levelspec_parser, LevelTypeVec};
 
 pub mod leveltype;
 pub use leveltype::LevelType;
