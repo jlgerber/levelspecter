@@ -546,7 +546,7 @@ mod tests {
     #[test]
     fn can_get_sequence_from_levelspec() {
         let ls = LevelSpec::from_sequence("DEV01","RD");
-        assert_eq!(ls.shot(), Some(&LevelType::Term("DEV01".to_string())));
+        assert_eq!(ls.show(), &LevelType::Term("DEV01".to_string()));
         assert_eq!(ls.sequence(), Some(&LevelType::Term("RD".to_string())));
         assert_eq!(ls.shot(), None);
     }
@@ -554,7 +554,7 @@ mod tests {
     #[test]
     fn can_get_shot_from_levelspec() {
         let ls = LevelSpec::from_shot("DEV01","RD", "0001");
-        assert_eq!(ls.shot(), Some(&LevelType::Term("DEV01".to_string())));
+        assert_eq!(ls.show(), &LevelType::Term("DEV01".to_string()));
         assert_eq!(ls.sequence(), Some(&LevelType::Term("RD".to_string())));
         assert_eq!(ls.shot(), Some(&LevelType::Term("0001".to_string())));
     }
