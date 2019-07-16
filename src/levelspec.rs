@@ -178,37 +178,37 @@ impl LevelSpec {
 
 
     /// Retrieve the show if it exists. Otherwise return None
-    pub fn show(&self) -> &str {
-        self.show.to_str()
+    pub fn show(&self) -> &LevelType {
+        &self.show
     }
 
     /// Retrieve the sequence as a string wrapped in an Option
-    pub fn sequence(&self) -> Option<&str> {
+    pub fn sequence(&self) -> Option<&LevelType> {
         if let Some(ref val) = self.sequence {
-            Some(val.to_str())
+            Some(val)
         } else {
             None
         }
     }
 
     /// Retrieve the sequence as a string wrapped in an Option
-    pub fn shot(&self) -> Option<&str> {
+    pub fn shot(&self) -> Option<&LevelType> {
         if let Some(ref val) = self.shot {
-            Some(val.to_str())
+            Some(val)
         } else {
             None
         }
     }
 
     /// Convert to a vector of &str
-    pub fn to_vec_str<'a>(&'a self) -> Vec<&'a str> {
-        let mut vec_strs = Vec::<&'a str>::new();
+    pub fn to_vec_str<'a>(&'a self) -> Vec<&'a LevelType> {
+        let mut vec_strs = Vec::<&'a LevelType>::new();
         //let val = self.show.to_str();
-        vec_strs.push(self.show.to_str());
+        vec_strs.push(self.show());
         if let Some(ref val) = self.sequence {
-            vec_strs.push(val.to_str());
+            vec_strs.push(val);
             if let Some(ref val) = self.shot {
-                vec_strs.push(val.to_str());
+                vec_strs.push(val);
             }
         }
         vec_strs
@@ -532,6 +532,31 @@ mod tests {
                 shot: None
             }
         );
+    }
+
+    #[test]
+    fn can_get_show_from_levelspec() {
+        let ls = LevelSpec::from_show("DEV01");
+        let show = ls.show();
+        assert_eq!(show, &LevelType::Term("DEV01".to_string()));
+        assert_eq!(ls.sequence(), None);
+        assert_eq!(ls.shot(), None);
+    }
+
+    #[test]
+    fn can_get_sequence_from_levelspec() {
+        let ls = LevelSpec::from_sequence("DEV01","RD");
+        assert_eq!(ls.shot(), Some(&LevelType::Term("DEV01".to_string())));
+        assert_eq!(ls.sequence(), Some(&LevelType::Term("RD".to_string())));
+        assert_eq!(ls.shot(), None);
+    }
+
+    #[test]
+    fn can_get_shot_from_levelspec() {
+        let ls = LevelSpec::from_shot("DEV01","RD", "0001");
+        assert_eq!(ls.shot(), Some(&LevelType::Term("DEV01".to_string())));
+        assert_eq!(ls.sequence(), Some(&LevelType::Term("RD".to_string())));
+        assert_eq!(ls.shot(), Some(&LevelType::Term("0001".to_string())));
     }
 
 }
