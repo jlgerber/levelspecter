@@ -110,6 +110,14 @@ mod levelspec_parser_tests {
             let ls = levelspec_parser("DEV_01");
             assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for DEV_01".to_string())));
         }
+
+        #[test]
+        fn can_parse_rel_only() {
+            let ls = levelspec_parser(".");
+            let expect: LevelTypeVec = vec![""].iter().map(|x| LevelType::from(*x)).collect();
+
+            assert_eq!(ls, Ok(expect))
+        }
     }
 
     //
@@ -183,6 +191,7 @@ mod levelspec_parser_tests {
             let ls = levelspec_parser("dev01.assetdev");
             assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for dev01.assetdev".to_string())))
         }
+
         #[test]
         fn cannot_start_with_number() {
             let ls = levelspec_parser("DEV01.1D");
@@ -205,6 +214,14 @@ mod levelspec_parser_tests {
         fn cannot_have_underscore() {
             let ls = levelspec_parser("DEV01.R_D");
             assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for DEV01.R_D".to_string())));
+        }
+
+        #[test]
+        fn can_parse_rel_only() {
+            let ls = levelspec_parser("..");
+            let expect: LevelTypeVec = vec!["", ""].iter().map(|x| LevelType::from(*x)).collect();
+
+            assert_eq!(ls, Ok(expect))
         }
     }
     //
@@ -316,6 +333,15 @@ mod levelspec_parser_tests {
             assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for DEV01.RD.0_001".to_string())));
         }
     }
+
+
+        #[test]
+        fn can_parse_rel_only() {
+            let ls = levelspec_parser("...");
+            let expect: LevelTypeVec = vec!["", "", ""].iter().map(|x| LevelType::from(*x)).collect();
+
+            assert_eq!(ls, Ok(expect))
+        }
 }
 
 
@@ -1539,6 +1565,7 @@ fn rel_shot_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     (input)
 }
 
+
 #[cfg(test)]
 mod rel_shot_alt {
     use super::*;
@@ -1549,9 +1576,7 @@ mod rel_shot_alt {
         let expect: LevelTypeVec = vec!["", "", "0001"].iter().map(|x| LevelType::from(*x)).collect();
         assert_eq!(ls, Ok(("", expect)));
     }
-
-
-    
+ 
     #[test]
     fn cannot_have_space() {
         let ls = rel_shot_alt("..00 01");
@@ -1581,6 +1606,44 @@ mod rel_shot_alt {
     }
 }
 
+fn rel_only_shot_alt(input: &str) -> IResult<&str, LevelTypeVec> {
+    map( //used to place into a vector
+        tag("..."), 
+        | _item| { 
+            let mut acc = Vec::with_capacity(3);
+            acc.push(LevelType::Relative);
+            acc.push(LevelType::Relative);
+            acc.push(LevelType::Relative); 
+            acc
+        } 
+    )
+    (input)
+}
+
+fn rel_only_seq_alt(input: &str) -> IResult<&str, LevelTypeVec> {
+    map( //used to place into a vector
+        tag(".."), 
+        | _item| { 
+            let mut acc = Vec::with_capacity(2);
+            acc.push(LevelType::Relative);
+            acc.push(LevelType::Relative);
+            acc
+        } 
+    )
+    (input)
+}
+
+fn rel_only_show_alt(input: &str) -> IResult<&str, LevelTypeVec> {
+    map( //used to place into a vector
+        tag("."), 
+        | _item| { 
+            let mut acc = Vec::with_capacity(1);
+            acc.push(LevelType::Relative);
+            acc
+        } 
+    )
+    (input)
+}
 //------------------------//
 //       levelparser      //
 //------------------------//
@@ -1597,35 +1660,11 @@ fn levelparser(input: &str) -> IResult<&str, LevelTypeVec> {
             seq_alt,
             show_rel_seq_alt,
             show_alt,
+            rel_only_shot_alt,
+            rel_only_seq_alt,
+            rel_only_show_alt,
         )))
      (input)?;
 
     Ok((leftover, result))
-}
-
-#[cfg(test)]
-mod parse_level {
-    use super::*;
-
-    #[test]
-    fn show_can_parse_wildcard() {
-        let result = parse_show("%");
-        assert!(result.is_ok());
-        assert_eq!(result, Ok(("", "%")));
-    }
-
-    #[test]
-    fn seq_can_parse_wildcard() {
-        let result = parse_seq(".%");
-        assert!(result.is_ok());
-        assert_eq!(result, Ok(("", "%")));
-    }
-
-    #[test]
-    fn shot_can_parse_wildcard() {
-        let result = parse_shot(".%");
-        assert!(result.is_ok());
-        assert_eq!(result, Ok(("", "%")));
-    }
-    
 }
