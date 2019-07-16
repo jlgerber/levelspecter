@@ -10,9 +10,10 @@ use nom::{
     sequence::{tuple, preceded, terminated },
     multi::{ fold_many1},
 };
-use crate::LevelSpecterError;
+use crate::{LevelSpecterError, LevelType};
 use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum, alpha_alphanum_upper_alpha, alpha_alphanum_alpha};
 
+pub type LevelTypeVec = Vec<LevelType>;
 
 /// Parse a levelspec from a string
 /// 
@@ -22,27 +23,28 @@ use aschar_casesensitive::{ upperalphanum1, alpha_alphanum_upper, alpha_alphanum
 /// 
 /// # Returns
 /// 
-/// A `Vec` of `&str` capturing the show, sequence, shot, if successful. Otherwise,
+/// A `Vec` of `LevelType` capturing the show, sequence, shot, if successful. Otherwise,
 /// a LevelSpecterError
 /// 
 /// # Example
 /// 
 /// ```
-/// use levelspecter::{levelspec_parser, LevelSpecterError};
+/// use levelspecter::{levelspec_parser, LevelType, LevelSpecterError};
 /// 
 /// // parse shot
 /// let results = levelspec_parser("DEV01.RD.0001");
-/// assert_eq!(results, Ok(vec!["DEV01", "RD", "0001"]));
+/// let expect: Vec<LevelType> = vec!["DEV01", "RD", "0001"].iter().map(|x| LevelType::from(*x)).collect();
+/// assert_eq!(results, Ok(expect));
 /// 
 /// // parse relative shot
 /// let results = levelspec_parser(".RD.0001");
-/// assert_eq!(results, Ok(vec!["", "RD", "0001"]));
+/// let expect: Vec<LevelType> = vec!["", "RD", "0001"].iter().map(|x| LevelType::from(*x)).collect();
+/// assert_eq!(results, Ok(expect));
 /// ```
-pub fn levelspec_parser(input: &str) -> Result<Vec<&str>, LevelSpecterError> {
+pub fn levelspec_parser(input: &str) -> Result<LevelTypeVec, LevelSpecterError> {
     match levelparser(input) {
         Err(_) => Err( LevelSpecterError::ParseError(format!("Unable to parse levelspec for {}", input))),
         Ok((_,ls)) => Ok(ls),
-
     }
 }
 
@@ -59,26 +61,29 @@ mod levelspec_parser_tests {
         #[test]
         fn can_parse_show() {
             let result = levelspec_parser("DEV01");
-            assert_eq!(result, Ok(vec!["DEV01"]));
+            let expect: LevelTypeVec = vec!["DEV01"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_wildcar_show() {
             let result = levelspec_parser("%");
-            assert_eq!(result, Ok(vec!["%"]));
+            let expect: LevelTypeVec = vec!["%"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
         
         #[cfg(feature = "case-insensitive")]
         #[test]
         fn can_parse_lowercase() {
             let ls = levelspec_parser("dev01");
-            assert_eq!(ls, Ok(vec!["dev01"]))
+            let expect: LevelTypeVec = vec!["dev01"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(ls, Ok(expect))
         }
 
         #[cfg(not(feature = "case-insensitive"))]
         #[test]
         fn cannot_parse_lowercase() {
-            let ls = levelspec_parser("dev01");
+            let ls = levelspec_parser("dev01");           
             assert_eq!(ls, Err(LevelSpecterError::ParseError("Unable to parse levelspec for dev01".to_string())));
         }
 
@@ -116,51 +121,60 @@ mod levelspec_parser_tests {
         #[test]
         fn can_parse_seq() {
             let result = levelspec_parser("DEV01.RD");
-            assert_eq!(result, Ok(vec!["DEV01", "RD"]));
+            let expect: LevelTypeVec = vec!["DEV01", "RD"].iter().map(|x| LevelType::from(*x)).collect();
+
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_seq_wildcard_show() {
             let result = levelspec_parser("%.RD");
-            assert_eq!(result, Ok(vec!["%", "RD"]));
+            let expect: LevelTypeVec = vec!["%", "RD"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_seq_wildcard_show_seq() {
             let result = levelspec_parser("%.%");
-            assert_eq!(result, Ok(vec!["%", "%"]));
+            let expect: LevelTypeVec = vec!["%", "%"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_seq_dot_show() {
             let result = levelspec_parser(".RD");
-            assert_eq!(result, Ok(vec!["", "RD"]));
+            let expect: LevelTypeVec = vec!["", "RD"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_dot_seq() {
             let result = levelspec_parser("DEV01.");
-            assert_eq!(result, Ok(vec!["DEV01", ""]));
+            let expect: LevelTypeVec = vec!["DEV01", ""].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[cfg(feature = "case-insensitive")]
         #[test]
         fn can_parse_lowercase() {
             let ls = levelspec_parser("dev01.rd");
-            assert_eq!(ls, Ok(vec!["dev01", "rd"]))
+            let expect: LevelTypeVec = vec!["dev01", "rd"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(ls, Ok(expect))
         }
     
         #[test]
         fn can_parse_assetdev() {
             let ls = levelspec_parser("DEV01.ASSETDEV");
-            assert_eq!(ls, Ok(vec!["DEV01", "ASSETDEV"]))
+            let expect: LevelTypeVec = vec!["DEV01", "ASSETDEV"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(ls, Ok(expect))
         }
 
         #[cfg(feature = "case-insensitive")]
         #[test]
         fn can_parse_assetdev_lowercase() {
             let ls = levelspec_parser("dev01.assetdev");
-            assert_eq!(ls, Ok(vec!["dev01", "assetdev"]))
+            let expect: LevelTypeVec = vec!["dev01", "assetdev"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(ls, Ok(expect))
         }
 
         #[cfg(not(feature = "case-insensitive"))]
@@ -202,62 +216,73 @@ mod levelspec_parser_tests {
         #[test]
         fn can_parse_shot() {
             let result = levelspec_parser("DEV01.RD.9999");
-            assert_eq!(result, Ok(vec!["DEV01", "RD", "9999"]));
+            let expect: LevelTypeVec = vec!["DEV01", "RD", "9999"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_shot_wildcard_show() {
             let result = levelspec_parser("%.RD.9999");
-            assert_eq!(result, Ok(vec!["%", "RD", "9999"]));
+            let expect: LevelTypeVec = vec!["%", "RD", "9999"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_shot_wildcard_show_seq() {
             let result = levelspec_parser("%.%.9999");
-            assert_eq!(result, Ok(vec!["%", "%", "9999"]));
+            let expect: LevelTypeVec = vec!["%", "%", "9999"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
         
         #[test]
         fn can_parse_shot_wildcard_show_seq_shot() {
             let result = levelspec_parser("%.%.%");
-            assert_eq!(result, Ok(vec!["%", "%", "%"]));
+            let expect: LevelTypeVec = vec!["%", "%", "%"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_shot_dot_show() {
             let result = levelspec_parser(".RD.9999");
-            assert_eq!(result, Ok(vec!["", "RD", "9999"]));
+            let expect: LevelTypeVec = vec!["", "RD", "9999"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_shot_dot_show_seq() {
             let result = levelspec_parser("..9999");
-            assert_eq!(result, Ok(vec!["", "", "9999"]));
+            let expect: LevelTypeVec = vec!["", "", "9999"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_dot_seq_shot() {
             let result = levelspec_parser("DEV01..");
-            assert_eq!(result, Ok(vec!["DEV01", "", ""]));
+            let expect: LevelTypeVec = vec!["DEV01", "", ""].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
 
         #[test]
         fn can_parse_seq_dot_show_shot() {
             let result = levelspec_parser(".RD.");
-            assert_eq!(result, Ok(vec!["", "RD", ""]));
+            let expect: LevelTypeVec = vec!["", "RD", ""].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(result, Ok(expect));
         }
         
         #[test]
         fn can_parse_assetdev() {
             let ls = levelspec_parser("DEV01.ASSETDEV.FOOBAR");
-            assert_eq!(ls, Ok(vec!["DEV01", "ASSETDEV", "FOOBAR"]))
+            let expect: LevelTypeVec = vec!["DEV01", "ASSETDEV", "FOOBAR"].iter().map(|x| LevelType::from(*x)).collect();
+
+            assert_eq!(ls, Ok(expect))
         }
 
         #[cfg(feature = "case-insensitive")]
         #[test]
         fn can_parse_assetdev_lowercase() {
             let ls = levelspec_parser("dev01.assetdev.foobar");
-            assert_eq!(ls, Ok(vec!["dev01", "assetdev", "foobar"]))
+            let expect: LevelTypeVec = vec!["dev01", "assetdev", "foobar"].iter().map(|x| LevelType::from(*x)).collect();
+            assert_eq!(ls, Ok(expect))
         }
 
         #[cfg(not(feature = "case-insensitive"))]
@@ -432,7 +457,7 @@ fn parse_assetdev_seq(input: &str) -> IResult<&str, &str> {
     // if .% is matched here, will that limit shots that are
     // matched afterwards to the assetdev_shot?. probably. this
     // is order dependent i would surmise. i should probably 
-    // remove the % as w dont want to match against asssetdev shots 
+    // remove the % as I dont want to match against asssetdev shots 
     // if the sequence is unknown
     //alt((
         preceded(tag("."),tag("ASSETDEV"))//,
@@ -771,7 +796,7 @@ mod parse_show_rel_seq {
 // accumulated into a vector. 
 #[inline]
 // EG DEV01.RD.0001
-fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn shot_alt(input: &str) -> IResult<&str, Vec<LevelType>> {
     map( //used to turn the tuple into a vector
         alt((
             tuple((parse_show, parse_assetdev_seq, parse_assetdev_shot)),
@@ -780,9 +805,9 @@ fn shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
         |item| {
             let (show, seq, shot) = item;
             let mut acc = Vec::with_capacity(3);
-            acc.push(show); 
-            acc.push(seq); 
-            acc.push(shot);
+            acc.push(LevelType::from(show)); 
+            acc.push(LevelType::from(seq)); 
+            acc.push(LevelType::from(shot));
             acc
         }
     )
@@ -796,20 +821,23 @@ mod shot_alt {
     #[test]
     fn can_parse() {
         let ls = shot_alt("DEV01.RS.0001");
-        assert_eq!(ls, Ok(("",vec!["DEV01", "RS", "0001"])))
+        let expect = vec!["DEV01", "RS", "0001"].iter().map(|x| LevelType::Term(x.to_string())).collect::<Vec<LevelType>>() ;
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
     fn can_parse_assetdev() {
         let ls = shot_alt("DEV01.ASSETDEV.FOOBAR");
-        assert_eq!(ls, Ok(("",vec!["DEV01", "ASSETDEV", "FOOBAR"])))
+        let expect = vec!["DEV01", "ASSETDEV", "FOOBAR"].iter().map(|x| LevelType::Term(x.to_string())).collect::<Vec<LevelType>>();
+        assert_eq!(ls, Ok(("",expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = shot_alt("dev01.assetdev.foobar");
-        assert_eq!(ls, Ok(("", vec!["dev01", "assetdev", "foobar"])));
+        let expect: Vec<LevelType> = vec!["dev01", "assetdev", "foobar"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[cfg(not(feature = "case-insensitive"))]
@@ -828,25 +856,29 @@ mod shot_alt {
     #[test]
     fn cannot_have_space() {
         let ls = shot_alt("DEV01.RD.0 001");
-        assert_eq!(ls,  Ok((" 001", vec!["DEV01", "RD", "0"])));
+        let expect: Vec<LevelType> = vec!["DEV01", "RD", "0"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls,  Ok((" 001", expect)));
     }
     
     #[test]
     fn cannot_have_wildcard_and_chars() {
         let ls = shot_alt("DEV01.RD.00%");
-        assert_eq!(ls, Ok(("%", vec!["DEV01", "RD", "00"])));
+        let expect: Vec<LevelType> = vec!["DEV01", "RD", "00"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("%", expect)));
     }
 
     #[test]
     fn cannot_have_underscore() {
         let ls = shot_alt("DEV01.RD.0_001");
-        assert_eq!(ls, Ok(("_001", vec!["DEV01", "RD", "0"])));
+        let expect: Vec<LevelType> = vec!["DEV01", "RD", "0"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("_001", expect)));
     }
 
     #[test]
     fn can_parse_wildcard() {
         let ls = shot_alt("DEV01.RS.%");
-        assert_eq!(ls, Ok(("", vec!["DEV01", "RS", "%"])));
+        let expect: Vec<LevelType> = vec!["DEV01", "RS", "%"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -857,14 +889,14 @@ mod shot_alt {
 // separated by a period, accumulated into a vector
 #[inline]
 // EG DEV01.RD
-fn seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn seq_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map(
         tuple((parse_show, parse_seq)),
         | item| {
             let mut acc = Vec::with_capacity(2);
             let (show, seq) = item ;
-            acc.push(show); 
-            acc.push(seq);
+            acc.push(LevelType::from(show)); 
+            acc.push(LevelType::from(seq));
             acc
         } 
     )
@@ -878,27 +910,31 @@ mod seq_alt {
     #[test]
     fn can_parse() {
         let ls = seq_alt("DEV01.RD");
-        assert_eq!(ls, Ok(("",vec!["DEV01", "RD"])));
+        let expect: LevelTypeVec = vec!["DEV01", "RD"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("",expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_lowercase() {
         let ls = seq_alt("dev01.rd");
-        assert_eq!(ls, Ok(("", vec!["dev01", "rd"])));
+        let expect: LevelTypeVec = vec!["dev01", "rd"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
     fn can_parse_assetdev() {
         let ls = seq_alt("DEV01.ASSETDEV");
-        assert_eq!(ls, Ok(("", vec!["DEV01", "ASSETDEV"])))
+        let expect: LevelTypeVec = vec!["DEV01", "ASSETDEV"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = seq_alt("dev01.assetdev");
-        assert_eq!(ls, Ok(("", vec!["dev01", "assetdev"])))
+        let expect: LevelTypeVec = vec!["dev01", "assetdev"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(not(feature = "case-insensitive"))]
@@ -917,25 +953,29 @@ mod seq_alt {
     #[test]
     fn cannot_have_space() {
         let ls = seq_alt("DEV01.R D");
-        assert_eq!(ls, Ok((" D", vec!["DEV01", "R"])));
+        let expect = vec!["DEV01", "R"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok((" D", expect)));
     }
     
     #[test]
     fn cannot_have_wildcard_and_chars() {
         let ls = seq_alt("DEV01.R%");
-        assert_eq!(ls, Ok(("%", vec!["DEV01", "R"])));
+        let expect: LevelTypeVec = vec!["DEV01", "R"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("%", expect)));
     }
 
     #[test]
     fn cannot_have_underscore() {
         let ls = seq_alt("DEV01.R_D");
-        assert_eq!(ls, Ok(("_D", vec!["DEV01", "R"])));
+        let expect: LevelTypeVec = vec!["DEV01", "R"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("_D", expect)));
     }
 
     #[test]
     fn can_parse_wildcard() {
         let ls = seq_alt("DEV01.%");
-        assert_eq!(ls, Ok(("",vec!["DEV01","%"])));
+        let expect: LevelTypeVec = vec!["DEV01","%"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -944,12 +984,12 @@ mod seq_alt {
 //-----------------------//
 #[inline]
 // EG DEV01
-fn show_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn show_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     // unlike the other levels, we cannot keep parsing until we are done, as 
     // 
     map(parse_show, |item| { 
             let mut acc = Vec::new();
-            acc.push(item); 
+            acc.push(LevelType::from(item)); 
             acc
         } 
     )
@@ -964,14 +1004,16 @@ mod show_alt {
     #[test]
     fn can_parse() {
         let ls = show_alt("DEV01");
-        assert_eq!(ls, Ok(("",vec!["DEV01"])));
+        let expect: LevelTypeVec = vec!["DEV01"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_lowercase() {
         let ls = show_alt("dev01");
-        assert_eq!(ls, Ok(("", vec!["dev01"])));
+        let expect = vec!["dev01"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
@@ -983,25 +1025,29 @@ mod show_alt {
     #[test]
     fn cannot_have_space() {
         let ls = show_alt("DEV 01");
-        assert_eq!(ls, Ok((" 01", vec!["DEV"])));
+        let expect: LevelTypeVec = vec!["DEV"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok((" 01", expect)));
     }
     
     #[test]
     fn cannot_have_wildcard_and_chars() {
         let ls = show_alt("DEV01%");
-        assert_eq!(ls, Ok(("%", vec!["DEV01"])));
+        let expect: LevelTypeVec = vec!["DEV01"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("%", expect)));
     }
 
     #[test]
     fn cannot_have_underscore() {
         let ls = show_alt("DEV01_D");
-        assert_eq!(ls, Ok(("_D", vec!["DEV01"])));
+        let expect: LevelTypeVec = vec!["DEV01"].iter().map(|x| LevelType::Term(x.to_string())).collect();
+        assert_eq!(ls, Ok(("_D", expect)));
     }
 
     #[test]
     fn can_parse_wildcard() {
         let ls = show_alt("%");
-        assert_eq!(ls, Ok(("",vec!["%"])));
+        let expect: LevelTypeVec = vec!["%"].iter().map(|x| LevelType::Wildcard).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -1010,14 +1056,14 @@ mod show_alt {
 //-----------------------//
 #[inline]
 // DEV01..
-fn show_rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn show_rel_shot_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map( //used to turn the tuple into a vector
         parse_show_rel_shot,
         |item| {
             let mut acc = Vec::with_capacity(2);
-            acc.push(item);
-            acc.push(""); 
-            acc.push(""); 
+            acc.push(LevelType::from(item));
+            acc.push(LevelType::Relative); 
+            acc.push(LevelType::Relative); 
             acc
         } 
     )
@@ -1031,13 +1077,15 @@ mod show_rel_shot_alt {
     #[test]
     fn can_parse_show_rel_shot_lower() {
         let ls = show_rel_shot_alt("DEV01..");
-        assert_eq!(ls, Ok(("",vec!["DEV01","",""])))
+        let expect: LevelTypeVec = vec!["DEV01","",""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }  
 
     #[test]
     fn can_show_parse_wildcard() {
         let ls = show_rel_shot_alt("%..");
-        assert_eq!(ls, Ok(("",vec!["%","",""])))
+        let expect: LevelTypeVec = vec!["%","",""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }  
 }
 
@@ -1046,13 +1094,13 @@ mod show_rel_shot_alt {
 //-----------------------//
 #[inline]
 // DEV01..
-fn show_rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn show_rel_seq_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map( //used to turn the tuple into a vector
         parse_show_rel_seq,
         |item| {
             let mut acc = Vec::with_capacity(2);
-            acc.push(item);
-            acc.push(""); 
+            acc.push(LevelType::from(item));
+            acc.push(LevelType::Relative); 
             acc
         } 
     )
@@ -1067,18 +1115,22 @@ mod show_rel_seq_alt {
     #[test]
     fn can_parse_show_rel_seq_lower() {
         let ls = show_rel_seq_alt("DEV01.");
-        assert_eq!(ls, Ok(("",vec!["DEV01",""])))
+        let expect: LevelTypeVec =vec!["DEV01",""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }  
 
     #[test]
     fn wont_parse_show_rel_shot_lower() {
         let ls = show_rel_seq_alt("DEV01..");
-        assert_eq!(ls, Ok((".",vec!["DEV01",""])))
+        let expect: LevelTypeVec = vec!["DEV01",""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok((".", expect)))
     }  
+
     #[test]
     fn can_parse_wildcard() {
         let ls = show_rel_seq_alt("%.");
-        assert_eq!(ls, Ok(("",vec!["%",""])))
+        let expect: LevelTypeVec = vec!["%",""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }  
 }
 
@@ -1090,7 +1142,7 @@ mod show_rel_seq_alt {
 // separated by a period, accumulated into a vector
 #[inline]
 // .RD
-fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn rel_seq_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map( //used to turn the tuple into a vector
         alt((
             parse_rel_assetdev_seq,
@@ -1098,8 +1150,8 @@ fn rel_seq_alt(input: &str) -> IResult<&str, Vec<&str>> {
         )),
         |item| {
             let mut acc = Vec::with_capacity(2);
-            acc.push(""); 
-            acc.push(item);
+            acc.push(LevelType::Relative); 
+            acc.push(LevelType::from(item));
             acc
         } 
     )
@@ -1114,27 +1166,31 @@ mod rel_seq_alt {
     #[test]
     fn can_parse() {
         let ls = rel_seq_alt(".RD");
-        assert_eq!(ls, Ok(("",vec!["", "RD"])));
+        let expect: LevelTypeVec = vec!["", "RD"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_lowercase() {
         let ls = rel_seq_alt(".rd");
-        assert_eq!(ls, Ok(("", vec!["", "rd"])));
+        let expect: LevelTypeVec = vec!["", "rd"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
     fn can_parse_assetdev() {
         let ls = rel_seq_alt(".ASSETDEV");
-        assert_eq!(ls, Ok(("", vec!["", "ASSETDEV"])))
+        let expect: LevelTypeVec = vec!["", "ASSETDEV"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = rel_seq_alt(".assetdev");
-        assert_eq!(ls, Ok(("", vec!["", "assetdev"])))
+        let expect: LevelTypeVec = vec!["", "assetdev"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(not(feature = "case-insensitive"))]
@@ -1153,25 +1209,29 @@ mod rel_seq_alt {
     #[test]
     fn cannot_have_space() {
         let ls = rel_seq_alt(".R D");
-        assert_eq!(ls, Ok((" D", vec!["", "R"])));
+        let expect:LevelTypeVec = vec!["", "R"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok((" D", expect)));
     }
     
     #[test]
     fn cannot_have_wildcard_and_chars() {
         let ls = rel_seq_alt(".R%");
-        assert_eq!(ls, Ok(("%", vec!["", "R"])));
+        let expect: LevelTypeVec = vec!["", "R"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("%", expect)));
     }
 
     #[test]
     fn cannot_have_underscore() {
         let ls = rel_seq_alt(".R_D");
-        assert_eq!(ls, Ok(("_D", vec!["", "R"])));
+        let expect: LevelTypeVec = vec!["", "R"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("_D", expect)));
     }
 
     #[test]
     fn can_parse_wildcard() {
         let ls = rel_seq_alt(".%");
-        assert_eq!(ls, Ok(("",vec!["","%"])));
+        let expect: LevelTypeVec = vec!["","%"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -1180,15 +1240,15 @@ mod rel_seq_alt {
 //---------------------//
 #[inline]
 // EG .RD.
-fn rel_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn rel_seq_rel_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     fold_many1( //used to turn the tuple into a vector
         //terminated(parse_rel_seq, tag(".")),
         parse_rel_seq_rel,
         Vec::with_capacity(3), 
         |mut acc: Vec<_>, item| {
-            acc.push(""); 
-            acc.push(item);
-            acc.push(""); 
+            acc.push(LevelType::Relative); 
+            acc.push(LevelType::from(item));
+            acc.push(LevelType::Relative); 
             acc
         } 
     )
@@ -1202,27 +1262,31 @@ mod rel_seq_rel_alt {
     #[test]
     fn can_parse() {
         let ls = rel_seq_rel_alt(".RD.");
-        assert_eq!(ls, Ok(("",vec!["", "RD", ""])));
+        let expect: LevelTypeVec = vec!["", "RD", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_lowercase() {
         let ls = rel_seq_rel_alt(".rd.");
-        assert_eq!(ls, Ok(("", vec!["", "rd", ""])));
+        let expect: LevelTypeVec = vec!["", "rd", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
     fn can_parse_assetdev() {
         let ls = rel_seq_rel_alt(".ASSETDEV.");
-        assert_eq!(ls, Ok(("", vec!["", "ASSETDEV", ""])))
+        let expect: LevelTypeVec = vec!["", "ASSETDEV", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = rel_seq_rel_alt(".assetdev.");
-        assert_eq!(ls, Ok(("", vec!["", "assetdev", ""])))
+        let expect: LevelTypeVec = vec!["", "assetdev", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(not(feature = "case-insensitive"))]
@@ -1259,7 +1323,8 @@ mod rel_seq_rel_alt {
     #[test]
     fn can_parse_wildcard() {
         let ls = rel_seq_rel_alt(".%.");
-        assert_eq!(ls, Ok(("",vec!["","%", ""])));
+        let expect: LevelTypeVec = vec!["","%", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -1269,7 +1334,7 @@ mod rel_seq_rel_alt {
 //----------------------//
 #[inline]
 // EG .RD.0001
-fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn rel_seq_shot_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map( //used to turn the tuple into a vector
         alt((
             tuple((parse_rel_seq, parse_shot)),
@@ -1278,9 +1343,9 @@ fn rel_seq_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
         |item| {
             let (seq, shot) = item;
             let mut acc = Vec::with_capacity(3);
-            acc.push(""); 
-            acc.push(seq);
-            acc.push(shot); 
+            acc.push(LevelType::Relative); 
+            acc.push(LevelType::from(seq));
+            acc.push(LevelType::from(shot)); 
             acc
         } 
     )
@@ -1294,27 +1359,31 @@ mod rel_seq_shot_alt {
     #[test]
     fn can_parse() {
         let ls = rel_seq_shot_alt(".RD.0001");
-        assert_eq!(ls, Ok(("",vec!["", "RD", "0001"])));
+        let expect: LevelTypeVec = vec!["", "RD", "0001"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_lowercase() {
         let ls = rel_seq_shot_alt(".rd.0001");
-        assert_eq!(ls, Ok(("", vec!["", "rd", "0001"])));
+        let expect: LevelTypeVec = vec!["", "rd", "0001"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
     fn can_parse_assetdev() {
         let ls = rel_seq_shot_alt(".ASSETDEV.FOO");
-        assert_eq!(ls, Ok(("", vec!["", "ASSETDEV", "FOO"])))
+        let expect: LevelTypeVec = vec!["", "ASSETDEV", "FOO"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = rel_seq_shot_alt(".assetdev.foo");
-        assert_eq!(ls, Ok(("", vec!["", "assetdev", "foo"])))
+        let expect: LevelTypeVec = vec!["", "assetdev", "foo"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(not(feature = "case-insensitive"))]
@@ -1351,7 +1420,8 @@ mod rel_seq_shot_alt {
     #[test]
     fn can_parse_wildcard() {
         let ls = rel_seq_shot_alt(".%.0001");
-        assert_eq!(ls, Ok(("",vec!["","%", "0001"])));
+        let expect: LevelTypeVec = vec!["","%", "0001"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -1361,15 +1431,15 @@ mod rel_seq_shot_alt {
 //------------------------//
 #[inline]
 // EG DEV01.RD.
-fn show_seq_rel_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn show_seq_rel_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map( //used to turn the tuple into a vector
         tuple((parse_show, terminated(parse_seq, tag(".")))), 
         |item| {
             let (show, seq) = item;
             let mut acc = Vec::with_capacity(3);
-            acc.push(show);
-            acc.push(seq); 
-            acc.push(""); 
+            acc.push(LevelType::from(show));
+            acc.push(LevelType::from(seq)); 
+            acc.push(LevelType::Relative); 
             acc
         } 
     )
@@ -1384,27 +1454,31 @@ mod show_seq_rel_alt {
     #[test]
     fn can_parse() {
         let ls = show_seq_rel_alt("DEV01.RD.");
-        assert_eq!(ls, Ok(("",vec!["DEV01", "RD", ""])));
+        let expect: LevelTypeVec = vec!["DEV01", "RD", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_lowercase() {
         let ls = show_seq_rel_alt("dev.rd.");
-        assert_eq!(ls, Ok(("", vec!["dev", "rd", ""])));
+        let expect: LevelTypeVec = vec!["dev", "rd", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
     #[test]
     fn can_parse_assetdev() {
         let ls = show_seq_rel_alt("DEV.ASSETDEV.");
-        assert_eq!(ls, Ok(("", vec!["DEV", "ASSETDEV", ""])))
+        let expect: LevelTypeVec = vec!["DEV", "ASSETDEV", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(feature = "case-insensitive")]
     #[test]
     fn can_parse_assetdev_lowercase() {
         let ls = show_seq_rel_alt("dev.assetdev.");
-        assert_eq!(ls, Ok(("", vec!["dev", "assetdev", ""])))
+        let expect: LevelTypeVec = vec!["dev", "assetdev", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)))
     }
 
     #[cfg(not(feature = "case-insensitive"))]
@@ -1441,7 +1515,8 @@ mod show_seq_rel_alt {
     #[test]
     fn can_parse_wildcard() {
         let ls = show_seq_rel_alt("DEV.%.");
-        assert_eq!(ls, Ok(("",vec!["DEV","%", ""])));
+        let expect: LevelTypeVec = vec!["DEV","%", ""].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
@@ -1450,14 +1525,14 @@ mod show_seq_rel_alt {
 //----------------------//
 #[inline]
 // EG ..0001
-fn rel_shot_alt(input: &str) -> IResult<&str, Vec<&str>> {
+fn rel_shot_alt(input: &str) -> IResult<&str, LevelTypeVec> {
     map( //used to place into a vector
         parse_rel_shot, 
         | item| { 
             let mut acc = Vec::with_capacity(3);
-            acc.push("");
-            acc.push("");
-            acc.push(item); 
+            acc.push(LevelType::Relative);
+            acc.push(LevelType::Relative);
+            acc.push(LevelType::from(item)); 
             acc
         } 
     )
@@ -1471,7 +1546,8 @@ mod rel_shot_alt {
     #[test]
     fn can_parse() {
         let ls = rel_shot_alt("..0001");
-        assert_eq!(ls, Ok(("",vec!["", "", "0001"])));
+        let expect: LevelTypeVec = vec!["", "", "0001"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 
 
@@ -1479,32 +1555,36 @@ mod rel_shot_alt {
     #[test]
     fn cannot_have_space() {
         let ls = rel_shot_alt("..00 01");
-        assert_eq!(ls, Ok((" 01",vec!["", "", "00"])));
+        let expect: LevelTypeVec = vec!["", "", "00"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok((" 01", expect)));
     }
     
     #[test]
     fn cannot_have_wildcard_and_chars() {
         let ls = rel_shot_alt("..0%01");
-        assert_eq!(ls, Ok(("%01",vec!["", "", "0"])));
+        let expect: LevelTypeVec = vec!["", "", "0"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("%01", expect)));
     }
 
     #[test]
     fn cannot_have_underscore() {
         let ls = rel_shot_alt("..00_01");
-        assert_eq!(ls, Ok(("_01",vec!["", "", "00"])));
+        let expect: LevelTypeVec = vec!["", "", "00"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("_01", expect)));
     }
 
     #[test]
     fn can_parse_wildcard() {
         let ls = rel_shot_alt("..%");
-        assert_eq!(ls, Ok(("",vec!["","", "%"])));
+        let expect: LevelTypeVec = vec!["","", "%"].iter().map(|x| LevelType::from(*x)).collect();
+        assert_eq!(ls, Ok(("", expect)));
     }
 }
 
 //------------------------//
 //       levelparser      //
 //------------------------//
-fn levelparser(input: &str) -> IResult<&str, Vec<&str>> {
+fn levelparser(input: &str) -> IResult<&str, LevelTypeVec> {
     let (leftover, result) = all_consuming(
         alt(( // order is critical fyi
             rel_shot_alt,
