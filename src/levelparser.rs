@@ -1046,7 +1046,7 @@ mod show_alt {
     #[test]
     fn can_parse_wildcard() {
         let ls = show_alt("%");
-        let expect: LevelTypeVec = vec!["%"].iter().map(|x| LevelType::Wildcard).collect();
+        let expect: LevelTypeVec = vec!["%"].iter().map(|_x| LevelType::Wildcard).collect();
         assert_eq!(ls, Ok(("", expect)));
     }
 }
